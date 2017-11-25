@@ -1,0 +1,200 @@
+\documentclass[%
+a4paper,
+DIV12,
+2.5headlines,
+bigheadings,
+titlepage,
+openbib,
+%draft
+]{scrartcl}
+
+\usepackage{amsfonts}
+\usepackage{amsmath}
+%\usepackage{lm}
+\usepackage{ifxetex}
+\usepackage{ifluatex}
+\usepackage{eurosym}
+\usepackage{listings}
+\usepackage{fancyvrb}
+\usepackage{longtable}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{grffile}
+\usepackage{ulem}
+\usepackage{tabularx}
+\usepackage[export]{adjustbox}
+\usepackage[T1]{fontenc}
+\usepackage{listings}
+\usepackage{titling}
+\usepackage{graphicx}
+\usepackage{scrpage2}
+\usepackage{float}
+\usepackage[colorinlistoftodos,prependcaption,textsize=tiny]{todonotes}
+\usepackage[pdftex, colorlinks, linktocpage, linkcolor=black, citecolor=black, urlcolor=black]{hyperref}
+\usepackage{atbegshi}% http://ctan.org/pkg/atbegshi
+\usepackage{placeins}
+
+\AtBeginDocument{\AtBeginShipoutNext{\AtBeginShipoutDiscard}}
+\pagestyle{scrheadings}
+
+\pretitle{%
+  \begin{center}
+  \LARGE
+  \includegraphics[width=6cm]{figures/octocat.jpg}\\[\bigskipamount]
+}
+\posttitle{\end{center}}
+
+\begin{document}
+
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+
+\DeclareRobustCommand{\desiredTitle}{
+  GitHub Repository Classification\\\normalsize{Solution for the informatiCup 2017}
+}
+
+\DeclareRobustCommand{\desiredAuthor}{
+  \\\\Willi Gierke\\\texttt{willi.gierke@student.hpi.de}\\Hasso-Plattner-Institute \and \\\\Sebastian Bischoff\\\texttt{sebastian.bischoff@student.hpi.de}\\Hasso-Plattner-Institute\\\\\\\\\\\\
+}
+
+\begin{titlepage}
+\begin{center}
+   \title{\desiredTitle}
+   \author{\desiredAuthor}
+   \date{Potsdam, January 2017}
+   \maketitle
+\end{center}
+\end{titlepage}
+
+\pagebreak
+
+\tableofcontents
+\pagebreak
+
+\section{Challenge Description}\label{challenge-description}
+
+
+\section{Data Exploration}\label{data-exploration}
+
+
+
+\subsection{Data Retrieval}\label{data-retrieval}
+
+
+
+\subsection{Data Analysis}\label{data-analysis}
+
+
+
+\section{Prediction Model}\label{prediction-model}
+
+
+
+\subsection{Training and Test Data
+Set}\label{training-and-test-data-set}
+
+
+
+\subsection{Classification Using Numeric Metadata of
+Repositories}\label{classification-using-numeric-metadata-of-repositories}
+
+
+\subsubsection{Data Cleaning and
+Preprocessing}\label{data-cleaning-and-preprocessing}
+
+
+
+\subsubsection{Feature Selection}\label{feature-selection}
+
+
+
+\subsubsection{Feature Engineering}\label{feature-engineering}
+
+
+
+\subsubsection{Numeric Metadata Prediction
+Model}\label{numeric-metadata-prediction-model}
+
+
+
+\subsubsection{Validation of Prediction
+Model}\label{validation-of-prediction-model}
+
+
+
+\subsection{Classification Using Text Data (Description and
+Readme)}\label{classification-using-text-data-description-and-readme}
+
+
+
+
+\subsubsection{Data Cleaning and
+Preprocessing}\label{data-cleaning-and-preprocessing-1}
+
+
+
+
+\subsubsection{Feature Generation from Existing
+Data}\label{feature-generation-from-existing-data}
+
+
+
+
+\subsubsection{Feature Selection}\label{feature-selection-1}
+
+
+
+\subsubsection{Prediction Model}\label{prediction-model-1}
+
+
+
+\subsubsection{Validation of Prediction Model}\label{validation-of-prediction-model-1}
+
+
+
+\subsection{Classification Using Source
+Code}\label{classification-using-source-code}
+
+
+
+\subsubsection{Data Cleaning and
+Preprocessing}\label{data-cleaning-and-preprocessing-2}
+
+
+
+\subsubsection{Feature Generation from Existing
+Data}\label{feature-generation-from-existing-data-1}
+
+
+
+\subsubsection{Prediction Model}\label{prediction-model-2}
+
+
+
+\subsubsection{Validation of Prediction
+Model}\label{validation-of-prediction-model-2}
+
+
+
+\subsection{Overall Prediction Model}\label{overall-prediction-model}
+
+
+
+\section{Implemented Application}\label{implemented-application}
+\subsection{Tooling Choices}\label{tooling-choices}
+
+
+
+\subsection{Functionality}\label{functionality}
+
+
+
+\section{Validation}\label{validation}
+
+
+
+\section{Extensions}\label{extensions}
+
+
+
+\end{document}
