@@ -4,3 +4,6 @@ data/raw/output_data/
 
 # Virtual Environment
 venv*
+
+# Jupyter
+notebooks/.ipynb_checkpoints/
