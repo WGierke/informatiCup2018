@@ -4,3 +4,11 @@ data/raw/output_data/
 
 # Virtual Environment
 venv*
+
+#LaTeX
+*.aux
+*.log
+*.out
+*.synctex.gz
+*.toc
+documentation.pdf
