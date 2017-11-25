@@ -12,5 +12,10 @@ venv*
 *.synctex.gz
 *.toc
 documentation.pdf
+##Bibtex
+*.bbl
+*.blg
+documentation.dvi
+
 # Jupyter
 notebooks/.ipynb_checkpoints/
