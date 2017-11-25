@@ -61,7 +61,7 @@ openbib,
 \begin{center}
    \title{\desiredTitle}
    \author{\desiredAuthor}
-   \date{Potsdam, January 2017}
+   \date{Potsdam, January 2018}
    \maketitle
 \end{center}
 \end{titlepage}
@@ -72,14 +72,41 @@ openbib,
 \pagebreak
 
 \section{Challenge Description}\label{challenge-description}
-
+- Describe task
 
 \section{Data Exploration}\label{data-exploration}
-
-
+- Some plots of data\\
+- Characteristic plots (with outliers etc.)
 
 \subsection{Data Retrieval}\label{data-retrieval}
-
+- Additional data\\
+ - clustering\\
+  - geolocation\\
+  - owning company\\
+  - price change behavior\\
+ - world market\\
+  - barrel oil\\
+  - gas?\\
+ - political features\\
+  - pipeline opening/closing\\
+  - sanctions\\
+  - OPEC\\
+ - opening of new gas station\\
+ - closing of old gas station\\
+ - very close gas stations\\
+  - on other Autobahn lane\\
+  - on opposite sides of the same street\\
+ - temperature\\
+ - weather\\
+ - news (?)\\
+ - holidays\\
+ - price in neighboring country\\
+ - on traveling route to other countries\\
+ - distance to Autobahn\\
+ - traffic information\\
+ - traffic density\\
+ 
+ 
 
 
 \subsection{Data Analysis}\label{data-analysis}
@@ -87,98 +114,37 @@ openbib,
 
 
 \section{Prediction Model}\label{prediction-model}
-
+- Maybe first predict time and then delta of change
 
 
 \subsection{Training and Test Data
 Set}\label{training-and-test-data-set}
 
 
-
-\subsection{Classification Using Numeric Metadata of
-Repositories}\label{classification-using-numeric-metadata-of-repositories}
-
-
-\subsubsection{Data Cleaning and
+\subsection{Data Cleaning and
 Preprocessing}\label{data-cleaning-and-preprocessing}
 
 
-
-\subsubsection{Feature Selection}\label{feature-selection}
-
-
-
-\subsubsection{Feature Engineering}\label{feature-engineering}
-
-
-
-\subsubsection{Numeric Metadata Prediction
-Model}\label{numeric-metadata-prediction-model}
-
-
-
-\subsubsection{Validation of Prediction
-Model}\label{validation-of-prediction-model}
-
-
-
-\subsection{Classification Using Text Data (Description and
-Readme)}\label{classification-using-text-data-description-and-readme}
-
-
-
-
-\subsubsection{Data Cleaning and
-Preprocessing}\label{data-cleaning-and-preprocessing-1}
-
-
-
-
-\subsubsection{Feature Generation from Existing
+\subsection{Feature Generation from Existing
 Data}\label{feature-generation-from-existing-data}
 
 
-
-
-\subsubsection{Feature Selection}\label{feature-selection-1}
-
-
-
-\subsubsection{Prediction Model}\label{prediction-model-1}
+\subsection{Feature Selection}\label{feature-selection}
 
 
 
-\subsubsection{Validation of Prediction Model}\label{validation-of-prediction-model-1}
+\subsection{Feature Engineering}\label{feature-engineering}
 
 
 
-\subsection{Classification Using Source
-Code}\label{classification-using-source-code}
-
-
-
-\subsubsection{Data Cleaning and
-Preprocessing}\label{data-cleaning-and-preprocessing-2}
-
-
-
-\subsubsection{Feature Generation from Existing
-Data}\label{feature-generation-from-existing-data-1}
-
-
-
-\subsubsection{Prediction Model}\label{prediction-model-2}
-
-
-
-\subsubsection{Validation of Prediction
-Model}\label{validation-of-prediction-model-2}
-
+\subsection{Validation of Prediction
+Model}\label{validation-of-prediction-model}
+- Fixed time span? Like last month?
 
 
 \subsection{Overall Prediction Model}\label{overall-prediction-model}
 
-
+\section{Algorithm for refueling}
 
 \section{Implemented Application}\label{implemented-application}
 \subsection{Tooling Choices}\label{tooling-choices}
@@ -190,11 +156,13 @@ Model}\label{validation-of-prediction-model-2}
 
 
 \section{Validation}\label{validation}
-
+- Discuss results of prediction (up to one month ahead)\\
+- Evaluate with suitable metrics
 
 
 \section{Extensions}\label{extensions}
-
+- App where you can specify a route, it calculates the optimal refuel stops and visualizes it on a map\\ 
+- Electric cars
 
 
 \end{document}
