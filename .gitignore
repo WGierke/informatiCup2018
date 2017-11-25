@@ -1,3 +1,6 @@
 # Data
 data/raw/input_data/
 data/raw/output_data/
+
+# Virtual Environment
+venv*
