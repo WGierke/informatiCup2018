@@ -140,7 +140,12 @@ Additional data:
 \section{Prediction Model}\label{prediction-model}
 \begin{itemize}
 \item Maybe first predict time and then delta of change\\
-\item \textbf{Baseline}: Predict time series only with historical data without further data (prophet)\\
+\item \textbf{Baseline}: Predict time series only with historical data without further data (facebook prophet)\\
+
+\begin{itemize}
+\item Doesn't take interactions between gas stations into account because one learns for each gas station a separate model
+\end{itemize}
+
 \item How to incorporate static data like distance to Autobahn? Cluster similar gas stations and learn joint prediction model. 
 What is the advantage over single models? Puhhh...\\
 \item Big ensemble:
