@@ -6,7 +6,7 @@ class Coordinate:
     """ 
     Maintain and calculate with Coordinates
     """
-    _CONSTANT_GROSSKREIS = 6378.388
+    _ERD_RADIUS = 6378.388
 
     def __init__(self, lat, long):
         """
@@ -14,8 +14,8 @@ class Coordinate:
         :param lat: latitude
         :param long: longitude
         """
-        self.lat = lat
-        self.long = long
+        self.lat = radians(lat)
+        self.long = radians(long)
 
     def dist(self, b):
         """
@@ -23,9 +23,11 @@ class Coordinate:
         :param b: Coordinate
         :return: distance
         """
-        return self._CONSTANT_GROSSKREIS * acos(
+        return self._ERD_RADIUS * acos(
             sin(self.lat) * sin(b.lat) + cos(self.lat) * cos(b.lat) * cos(b.long - self.long))
 
+    def __iter__(self):
+        return [degrees(self.lat),degrees(self.long)].__iter__()
 
 class MinHeap:
     """
@@ -68,13 +70,20 @@ class FixedPathGasStation:
     ACM Trans. Algorithms 7, 3, Article 36 (July 2011), 16 pages. DOI=http://dx.doi.org/10.1145/1978782.1978791 
     """
 
-    def __init__(self, path, capacity, start_fuel):
-        self.capacity = capacity
+    def __init__(self, path, liter_capacity, start_fuel, liter_per_100_km=5.6):
+        self.liter_capacity = liter_capacity
+        self.liter_per_100_km = liter_per_100_km
+
         self.start_fuel = start_fuel
         self.path = path
 
         self.pre_compute()
+        self.check_assumptions()
         self.compute()
+
+    def check_assumptions(self):
+        if len(list(filter(lambda dist: dist > self.km_capacity, self.segment_distance))) != 0:
+            raise AssertionError('Capacity is not enough to drive from every station to next.')
 
     def d(self, a, b):
         if a == b:
@@ -89,12 +98,20 @@ class FixedPathGasStation:
         self.segment_distance = [self.path['coords'][i].dist(self.path['coords'][i + 1]) for i in range(self.stops - 1)]
         self.segment_distance.append(0)
 
+        self.km_capacity = self.lit2km(self.liter_capacity)
+
     def compute(self):
         self.compute_next_prev()
         self.compute_fill_commands()
         self.compute_fill_amount()
         self.compute_price()
         return self.price
+
+    def km2lit(self,km):
+        return (km / 100) * self.liter_per_100_km
+
+    def lit2km(self,liter):
+        return (liter / self.liter_per_100_km) * 100
 
     def compute_next_prev(self):
         n = self.stops
@@ -113,7 +130,7 @@ class FixedPathGasStation:
             upper += 1
 
             # remove all stations too far away
-            while lower < upper - 1 and lower < n - 2 and self.d(lower, upper) > self.capacity:
+            while lower < upper - 1 and lower < n - 2 and self.d(lower, upper) > self.km_capacity:
                 heap.ignore_inlcuding(lower + 1)
                 # and add their previous
                 next[lower] = heap.top()[1]
@@ -140,12 +157,12 @@ class FixedPathGasStation:
 
     def compute_fill_commands(self):
 
-        fill_cmd = [0] * self.stops
+        fill_command_km = [0] * self.stops
 
         def drive_to_next(i, k, fill):
             x = i
             d_x_k = self.d(x, k)
-            while d_x_k > self.capacity:
+            while d_x_k > self.km_capacity:
                 fill[x] = 'fill up'  # todo only fill up to k
                 x = self.next[x]
                 d_x_k = self.d(x, k)
@@ -153,25 +170,25 @@ class FixedPathGasStation:
             return fill
 
         for i in range(len(self.break_points) - 1):
-            fill_cmd = drive_to_next(self.break_points[i], self.break_points[i + 1], fill_cmd)
-        self.fill_cmd = fill_cmd
+            fill_command_km = drive_to_next(self.break_points[i], self.break_points[i + 1], fill_command_km)
+        self.fill_command_km = fill_command_km
 
     def compute_fill_amount(self):
         fuel = self.start_fuel
-        fill_amount = len(self.path) * [0]
-        for i, f in enumerate(self.fill_cmd):
+        fill_liters = len(self.path) * [0]
+        for i, f in enumerate(self.fill_command_km):
             if f == 'fill up':
-                fill_amount[i] = self.capacity - fuel
+                fill_liters[i] = self.liter_capacity - fuel
             else:
-                fill_amount[i] = max(0, f - fuel)
-            fuel = fuel + fill_amount[i] - self.segment_distance[i]
-        self.fill_amount = fill_amount
+                fill_liters[i] = max(0, self.km2lit(f) - fuel)
+            fuel = fuel + fill_liters[i] - self.km2lit(self.segment_distance[i])
+        self.fill_liters = fill_liters
 
     def compute_price(self):
-        self.price = sum([cost * amount for cost, amount in zip(self.path['cost'], self.fill_amount)])
+        self.price = sum([cost * liters for cost, liters in zip(self.path['cost'], self.fill_liters)])
 
     def __str__(self):
         display_format = "{}: {}"
         to_be_printed = [('next', self.next), ('prev', self.prev), ('break_points', self.break_points),
-                         ('price', self.price), ('fill_amount', self.fill_amount), ('fill_command', self.fill_cmd)]
+                         ('price', self.price), ('fill_amount', self.fill_liters), ('fill_command in km', self.fill_command_km)]
         return 'Solution uses:\n' + '\n'.join([display_format.format(name, var) for name, var in to_be_printed])
