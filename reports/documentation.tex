@@ -145,7 +145,7 @@ Additional data:
 \begin{itemize}
 \item Doesn't take interactions between gas stations into account because one learns for each gas station a separate model
 \end{itemize}
-
+		
 \item How to incorporate static data like distance to Autobahn? Cluster similar gas stations and learn joint prediction model. 
 What is the advantage over single models? Puhhh...\\
 \item Big ensemble:
@@ -156,11 +156,24 @@ What is the advantage over single models? Puhhh...\\
 
 \begin{itemize}
 \item Cluster based on static attributes
+
+\begin{itemize}
+\item Assumption would be that the behavior of the gas price is dependent on the static attributes --> There is a causal connection between static attributes and behavior of gas price
+\item e.g. all gas stations on Autobahnen share the same behavior
+\end{itemize}
+
 \item Cluster based on static attributes and single value features of a time series (e.g. average number of price changes per day, time of maximum price etc.)
+
+\begin{itemize}
+\item Doesn't have clear theoretical explanation yet
+\end{itemize}
+
 \item Cluster based on time series 
 
 \begin{itemize}
-\item e.g. correlation between time series
+\item Time series are only described by the behavior of the time series and not by static attributes
+\item e.g. only dependent on risk disposition of gas station attendant and not on vicinity of Autobahn
+\item Could cluster for example based on correlation between time series
 \item look into literature
 \item ask someone at the chair
 \item No use for static features?
