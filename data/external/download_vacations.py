@@ -1,7 +1,7 @@
 import requests
 
 short_names = ['BW', 'BY', 'BE', 'BB', 'HB', 'HH', 'HE', 'MV', 'NI', 'NW', 'RP', 'SL', 'SN', 'ST', 'SH', 'TH']
-url = "http://www.spiketime.de/feiertagapi/feiertage/{name}/{year}"
+url = "http://api.smartnoob.de/ferien/v1/ferien/?bundesland={name}&jahr={year}"
 
 for year in range(2014, 2019):
     for name in short_names:
