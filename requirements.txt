@@ -62,3 +62,4 @@ urllib3==1.22
 wcwidth==0.1.7
 webencodings==0.5.1
 widgetsnbextension==3.0.8
+quandl
