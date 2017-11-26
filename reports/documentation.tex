@@ -73,40 +73,62 @@ openbib,
 \pagebreak
 
 \section{Challenge Description}\label{challenge-description}
-- Describe task
+\begin{itemize}
+\item Describe task
+\end{itemize}
 
 \section{Data Exploration}\label{data-exploration}
-- Some plots of data\\
-- Characteristic plots (with outliers etc.)
+\begin{itemize}
+\item Some plots of data\\
+\item Characteristic plots (with outliers etc.)
+\end{itemize}
+
 
 \subsection{Data Retrieval}\label{data-retrieval}
-- Additional data\\
- - clustering\\
-  - geolocation\\
-  - owning company\\
-  - price change behavior\\
- - world market\\
-  - barrel oil\\
-  - gas?\\
- - political features\\
-  - pipeline opening/closing\\
-  - sanctions\\
-  - OPEC\\
- - opening of new gas station\\
- - closing of old gas station\\
- - very close gas stations\\
-  - on other Autobahn lane\\
-  - on opposite sides of the same street\\
- - temperature\\
- - weather\\
- - news (?)\\
- - holidays\\
- - price in neighboring country\\
- - on traveling route to other countries\\
- - distance to Autobahn\\
- - traffic information\\
- - traffic density\\
+Additional data:
+\begin{itemize}
+\item clustering
+
+\begin{itemize}
+\item geolocation
+\item owning company
+\item price change behavior
+\end{itemize}
+
+\item world market
+
+\begin{itemize}
+\item barrel oil
+\item gas?
+\end{itemize}
+
+\item political features
+
+\begin{itemize}
+\item pipeline opening/closing
+\item sanctions
+\item OPEC
+\end{itemize}
+
+\item opening of new gas station
+\item closing of old gas station
+\item very close gas stations
  
+\begin{itemize}
+\item on other Autobahn lane
+\item on opposite sides of the same street
+\end{itemize}
+
+\item temperature
+\item weather
+\item news (?)
+\item holidays
+\item price in neighboring country
+\item on traveling route to other countries
+\item distance to Autobahn
+\item traffic information
+\item traffic density
+\end{itemize}
  
 
 
@@ -158,7 +180,9 @@ Data}\label{feature-generation-from-existing-data}
 
 \subsection{Validation of Prediction
 Model}\label{validation-of-prediction-model}
-- Fixed time span? Like last month?
+\begin{itemize}
+\item Fixed time span? Like last month?
+\end{itemize}
 
 
 \subsection{Overall Prediction Model}\label{overall-prediction-model}
@@ -177,17 +201,24 @@ For extension to electric cars see \ref{extensions}
 
 
 \section{Validation}\label{validation}
-- Discuss results of prediction (up to one month ahead)\\
-- Evaluate with suitable metrics
+\begin{itemize}
+\item Discuss results of prediction (up to one month ahead)
+\item Evaluate with suitable metrics
+\end{itemize}
 
 
 \section{Extensions}\label{extensions}
-- App where you can specify a route, it calculates the optimal refuel stops and visualizes it on a map\\ 
-- Model the problem for electric cars\\
- - we can assume that the price per kWh is equal at each charger (check this)\\
- - but different charger charge with a different speed (2 to 22(?)kW)\\
- - not every charger is with every car compatible\\
- - prediction task: predict if the charger is occupied or free\\
+\begin{itemize}
+\item App where you can specify a route, it calculates the optimal refuel stops and visualizes it on a map
+\item Model the problem for electric cars
+
+\begin{itemize}
+\item we can assume that the price per kWh is equal at each charger (check this)\\
+\item but different charger charge with a different speed (2 to 22(?)kW)\\
+\item not every charger is with every car compatible\\
+\item prediction task: predict if the charger is occupied or free\\
+\end{itemize}
+\end{itemize}
 
 \bibliographystyle{acm}
 \bibliography{documentation} 
