@@ -115,17 +115,24 @@ openbib,
 
 
 \section{Prediction Model}\label{prediction-model}
-\begin{easylist}[itemize]
-& Maybe first predict time and then delta of change\\
-& \textbf{Baseline}: Predict time series only with historical data without further data (prophet)\\
-& How to incorporate static data like distance to Autobahn? Cluster similar gas stations and learn joint prediction model. 
+\begin{itemize}
+\item Maybe first predict time and then delta of change\\
+\item \textbf{Baseline}: Predict time series only with historical data without further data (prophet)\\
+\item How to incorporate static data like distance to Autobahn? Cluster similar gas stations and learn joint prediction model. 
 What is the advantage over single models? Puhhh...\\
-& Big ensemble: 
-&& One global model which predicts average gas price (change)
-&& One cluster model which predicts change in cluster of similar gas stations relative to global model
-&&& Cluster based on static attributes
-&& One gas station model which predicts change of individual gas station relative to cluster model
-\end{easylist}
+\item Big ensemble:
+
+\begin{itemize}
+\item One global model which predicts average gas price (change)
+\item One cluster model which predicts change in cluster of similar gas stations relative to global model
+
+\begin{itemize}
+\item Cluster based on static attributes
+\end{itemize}
+
+\item One gas station model which predicts change of individual gas station relative to cluster model
+\end{itemize}
+\end{itemize}
 
 
 
