@@ -209,7 +209,22 @@ Data}\label{feature-generation-from-existing-data}
 \subsection{Validation of Prediction
 Model}\label{validation-of-prediction-model}
 \begin{itemize}
-\item Fixed time span? Like last month?
+\item Evaluate on fixed time span? Like last month?
+\item Data doesn't have discrete change intervals like each minute, hour, day...
+\item Need fitting cost function
+
+\begin{itemize}
+\item Normal MSE
+\item MSE but algorithm is restricted to maximum $n$ price changes per day
+\end{itemize}
+
+\item One could train it as "end-to-end-model"
+
+\begin{itemize}
+\item Evaluate on multiple routes in conjunction with defined times for refueling stops
+\item Routes could be generated with random walks on gas station graph
+\item Optimization could be challenging
+\end{itemize}
 \end{itemize}
 
 
