@@ -1,7 +1,7 @@
 informatiCup2018
 ==============================
 
-Predicting the optimal strategy for fueling for a given route
+Predicting the optimal strategy for fueling for a given route ([task description](https://github.com/WGierke/informatiCup2018/blob/master/references/Intellitank.pdf)).
 
 Project Organization
 ------------
