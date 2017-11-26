@@ -33,6 +33,7 @@ openbib,
 \usepackage[pdftex, colorlinks, linktocpage, linkcolor=black, citecolor=black, urlcolor=black]{hyperref}
 \usepackage{atbegshi}% http://ctan.org/pkg/atbegshi
 \usepackage{placeins}
+\usepackage[ampersand]{easylist}
 
 \AtBeginDocument{\AtBeginShipoutNext{\AtBeginShipoutDiscard}}
 \pagestyle{scrheadings}
@@ -114,7 +115,18 @@ openbib,
 
 
 \section{Prediction Model}\label{prediction-model}
-- Maybe first predict time and then delta of change
+\begin{easylist}[itemize]
+& Maybe first predict time and then delta of change\\
+& \textbf{Baseline}: Predict time series only with historical data without further data (prophet)\\
+& How to incorporate static data like distance to Autobahn? Cluster similar gas stations and learn joint prediction model. 
+What is the advantage over single models? Puhhh...\\
+& Big ensemble: 
+&& One global model which predicts average gas price (change)
+&& One cluster model which predicts change in cluster of similar gas stations relative to global model
+&&& Cluster based on static attributes
+&& One gas station model which predicts change of individual gas station relative to cluster model
+\end{easylist}
+
 
 
 \subsection{Training and Test Data
@@ -145,7 +157,8 @@ Model}\label{validation-of-prediction-model}
 \subsection{Overall Prediction Model}\label{overall-prediction-model}
 
 \section{Algorithm for refueling}
-"To fill or not to fill"\cite{khuller2007fill}
+"To fill or not to fill"\cite{khuller2007fill}\\
+For extension to electric cars see \ref{extensions}
 
 \section{Implemented Application}\label{implemented-application}
 \subsection{Tooling Choices}\label{tooling-choices}
