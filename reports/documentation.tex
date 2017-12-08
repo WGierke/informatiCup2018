@@ -19,6 +19,7 @@ openbib,
 \usepackage{longtable}
 \usepackage{booktabs}
 \usepackage{graphicx}
+\usepackage{mathbb}
 \usepackage{grffile}
 \usepackage{ulem}
 \usepackage{tabularx}
@@ -237,6 +238,25 @@ Model}\label{validation-of-prediction-model}
 \section{Algorithm for refueling}
 "To fill or not to fill"\cite{khuller2007fill}\\
 For extension to electric cars see \ref{extensions}
+For extension with real-time-information and certainty of prediction.
+
+\subsection{Optimal solution with perfect knowledge: Berta Benz's Route}
+
+In the \textit{Fixed Path Gas Station Problem with unlimited refills} given Gas Stations $S_i$ with $0 <= i <= n$ each with a gas cost $cost_i$, a fixed path $P = (S_0,S_1, ..., S_n)$, a tank capacity $c$ and distances $d_{ij}$ with $0 <= i <= j <= n$ we want to find an optimal filling strategy $f: S \rightarrow R$ so that we can reach S_n with f and f is minimal for each scenario.
+
+In the task a naive approach was spplied to the Berta Benz Memorial Route.
+At each gas station the tank was filled up completely.
+Only in the case of 
+
+\cite{khuller2007fill} showed that this problem has an optimal solution that can be found in $O(n log(n))$.
+
+
+
+\begin{itemize}
+\item given solution was naive: fill up at every needed stop, give easy instance for not optimal
+\end{itemize}
+
+\subsection{
 
 \section{Implemented Application}\label{implemented-application}
 \subsection{Tooling Choices}\label{tooling-choices}
@@ -263,6 +283,7 @@ For extension to electric cars see \ref{extensions}
 \item we can assume that the price per kWh is equal at each charger (check this)\\
 \item but different charger charge with a different speed (2 to 22(?)kW)\\
 \item not every charger is with every car compatible\\
+\item optimization task: time spent charging/waiting at gas station \\
 \item prediction task: predict if the charger is occupied or free\\
 \end{itemize}
 
