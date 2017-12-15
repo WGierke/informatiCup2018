@@ -1,0 +1,13 @@
+.wrap {
+  width: 450px;
+  margin: 0 auto;
+}
+
+.logo-img {
+    max-height: 64px!important;
+    padding: 15px 0!important;
+}
+
+.enlarged_nav {
+  height: 100px;
+}

@@ -1,234 +1,182 @@
-<!--  https://stackoverflow.com/questions/17283826/how-to-to-get-places-e-g-gas-stations-along-route-between-origin-and-destinati -->
-<script src="https://maps.googleapis.com/maps/api/js?libraries=places&key=AIzaSyBCZLM5WKjn0PPeqtB8JTA50CwCwKoNP28"></script>
-<script src="https://cdn.rawgit.com/googlemaps/v3-utility-library/master/routeboxer/src/RouteBoxer.js" type="text/javascript"></script>
+<html lang="en">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Parallax Template - Materialize</title>
 
-<script>
-var map = null;
-var boxpolys = null;
-var directions = null;
-var routeBoxer = null;
-var distance = null; // km
-var service = null;
-var gmarkers = [];
-var boxes = null;
-var infowindow = new google.maps.InfoWindow();
+  <!-- CSS  -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link href="http://materializecss.com/dist/css/materialize.min.css" type="text/css" rel="stylesheet" media="screen,projection"/>
+  <link href="http://materializecss.com/templates/parallax-template/css/style.css" type="text/css" rel="stylesheet" media="screen,projection"/>
+  <link href="style.css" rel="stylesheet">
+  <!--  Scripts-->
+  <script src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
+  <script src="http://materializecss.com/dist/js/materialize.js"></script>
+  <script src="http://materializecss.com/templates/parallax-template/js/init.js"></script>
+  <!--  https://stackoverflow.com/questions/17283826/how-to-to-get-places-e-g-gas-stations-along-route-between-origin-and-destinati -->
+  <script src="https://maps.googleapis.com/maps/api/js?libraries=places&key=AIzaSyBCZLM5WKjn0PPeqtB8JTA50CwCwKoNP28"></script>
+  <script src="https://cdn.rawgit.com/googlemaps/v3-utility-library/master/routeboxer/src/RouteBoxer.js" type="text/javascript"></script>
+  <script src="http://chingyawhao.github.io/js/materialize.clockpicker.js" type="text/javascript"></script>
+  <script src="mapmagic.js" type="text/javascript"></script>
+</head>
+<body>
+  <nav class="enlarged_nav white" role="navigation">
+    <div class="nav-wrapper container">
+      <img class="brand-logo center" src="logo.jpg" style="max-height: 100px!important;"/>
+      <ul class="right hide-on-med-and-down">
+        <li><a href="#">Navbar Link</a></li>
+      </ul>
 
-function initialize() {
-  // Default the map view to the continental U.S.
-  var mapOptions = {
-    center: new google.maps.LatLng(40, -80.5),
-    mapTypeId: google.maps.MapTypeId.ROADMAP,
-    zoom: 8
-  };
+      <ul id="nav-mobile" class="side-nav">
+        <li><a href="#">Navbar Link</a></li>
+      </ul>
+      <a href="#" data-activates="nav-mobile" class="button-collapse"><i class="material-icons">menu</i></a>
+    </div>
+  </nav>
 
-  map = new google.maps.Map(document.getElementById("map"), mapOptions);
-  service = new google.maps.places.PlacesService(map);
+  <div id="index-banner" class="parallax-container">
+    <div class="section no-pad-bot">
+      <div class="container">
+        <br><br>
+        <h1 class="header center teal-text text-lighten-2">Parallax Template</h1>
+        <div class="row center">
+          <h5 class="header col s12 light">A modern responsive front-end framework based on Material Design</h5>
+        </div>
+        <div class="row center">
+          <a href="http://materializecss.com/getting-started.html" id="download-button" class="btn-large waves-effect waves-light teal lighten-1">Get Started</a>
+        </div>
+        <br><br>
 
-  routeBoxer = new RouteBoxer();
+      </div>
+    </div>
+    <div class="parallax"><img src="http://materializecss.com/templates/parallax-template/background1.jpg" alt="Unsplashed background img 1"></div>
+  </div>
 
-  directionService = new google.maps.DirectionsService();
-  directionsRenderer = new google.maps.DirectionsRenderer({
-    map: map
-  });
 
-  // If there are any parameters at eh end of the URL, they will be in  location.search
-  // looking something like  "?marker=3"
+  <div class="container">
+    <div class="section">
+      <div class="row">
+        <div class="col s4">
+          From
+          <input type="text" id="from" value="Potsdam, Germany" />
+        </div>
+        <div class="col s4">
+          To
+          <input type="text" id="to" value="Ulm, Germany" />
+        </div>
+        <div class="col s4">
+          Starting at
+          <input id="time" class="timepicker" type="text">
+        </div>
+      </div>
+      <div class="row">
+        <div class="col s4">
+          Maximal distance to fastest route (miles):
+          <input type="text" id="distance" value="1" size="2">
+        </div>
+        <div class="col s4">
+          Tank size (liter)
+          <input type="text" id="tank" value="50" size="2">
+        </div>
+        <div class="col s4">
+          <input type="submit" onclick="route()" />
+          <input type="text" id="type" value="gas_station" hidden />
+          <input type="text" id="keyword" value="gas_station" hidden />
+          <input type="text" id="name" value="" hidden />
+          <div id="towns"></div>
+        </div>
+      </div>
+        <table border="1">
+          <tr>
+            <td valign="top">
+              <div id="map" style="width: 600px; height: 500px;"></div>
+            </td>
+            <td>
+              <div id="side_bar" style="width:200px; height: 600px; overflow: auto"></div>
+            </td>
+          </tr>
+        </table>
+      </div>
+    </div>
+  </div>
 
-  // skip the first character, we are not interested in the "?"
-  var query = location.search.substring(1);
+  <div class="parallax-container valign-wrapper">
+    <div class="section no-pad-bot">
+      <div class="container">
+        <div class="row center">
+          <h5 class="header col s12 light">A modern responsive front-end framework based on Material Design</h5>
+        </div>
+      </div>
+    </div>
+    <div class="parallax"><img src="http://materializecss.com/templates/parallax-template/background2.jpg" alt="Unsplashed background img 2"></div>
+  </div>
 
-  // split the rest at each "&" character to give a list of  "argname=value"  pairs
-  var pairs = query.split("&");
-  for (var i = 0; i < pairs.length; i++) {
-    // break each pair at the first "=" to obtain the argname and value
-    var pos = pairs[i].indexOf("=");
-    var argname = pairs[i].substring(0, pos).toLowerCase();
-    var value = pairs[i].substring(pos + 1).toLowerCase();
+  <div class="container">
+    <div class="section">
 
-    // process each possible argname  -  use unescape() if theres any chance of spaces
-    if (argname == "to") {
-      document.getElementById('to').value = unescape(value);
-    }
-    if (argname == "from") {
-      document.getElementById('from').value = unescape(value);
-    }
-    if (argname == "dist") {
-      document.getElementById('distance').value = parseFloat(value);
-    }
-    if (argname == "type") {
-      document.getElementById('type').value = unescape(value);
-    }
-    if (argname == "keyword") {
-      document.getElementById('keyword').value = unescape(value);
-    }
-    if (argname == "name") {
-      document.getElementById('name').value = unescape(value);
-    }
-    if (argname == "submit") {
-      route();
-    }
-  }
+      <div class="row">
+        <div class="col s12 center">
+          <h3><i class="mdi-content-send brown-text"></i></h3>
+          <h4>Contact Us</h4>
+          <p class="left-align light">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam scelerisque id nunc nec volutpat. Etiam pellentesque tristique arcu, non consequat magna fermentum ac. Cras ut ultricies eros. Maecenas eros justo, ullamcorper a sapien id, viverra ultrices eros. Morbi sem neque, posuere et pretium eget, bibendum sollicitudin lacus. Aliquam eleifend sollicitudin diam, eu mattis nisl maximus sed. Nulla imperdiet semper molestie. Morbi massa odio, condimentum sed ipsum ac, gravida ultrices erat. Nullam eget dignissim mauris, non tristique erat. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae;</p>
+        </div>
+      </div>
 
-}
+    </div>
+  </div>
 
-function route() {
-  // Clear any previous route boxes from the map
-  clearBoxes();
 
-  // Convert the distance to box around the route from miles to km
-  distance = parseFloat(document.getElementById("distance").value) * 1.609344;
+  <div class="parallax-container valign-wrapper">
+    <div class="section no-pad-bot">
+      <div class="container">
+        <div class="row center">
+          <h5 class="header col s12 light">A modern responsive front-end framework based on Material Design</h5>
+        </div>
+      </div>
+    </div>
+    <div class="parallax"><img src="http://materializecss.com/templates/parallax-template/background3.jpg" alt="Unsplashed background img 3"></div>
+  </div>
 
-  var request = {
-    origin: document.getElementById("from").value,
-    destination: document.getElementById("to").value,
-    travelMode: google.maps.DirectionsTravelMode.DRIVING
-  }
-
-  // Make the directions request
-  directionService.route(request, function(result, status) {
-    if (status == google.maps.DirectionsStatus.OK) {
-      directionsRenderer.setDirections(result);
-
-      // Box around the overview path of the first route
-      var path = result.routes[0].overview_path;
-      boxes = routeBoxer.box(path, distance);
-      // alert(boxes.length);
-      drawBoxes();
-      findPlaces(0);
-    } else {
-      alert("Directions query failed: " + status);
-    }
-  });
-}
-
-// Draw the array of boxes as polylines on the map
-function drawBoxes() {
-  boxpolys = new Array(boxes.length);
-  for (var i = 0; i < boxes.length; i++) {
-    boxpolys[i] = new google.maps.Rectangle({
-      bounds: boxes[i],
-      fillOpacity: 0,
-      strokeOpacity: 1.0,
-      strokeColor: '#000000',
-      strokeWeight: 1,
-      map: map
+  <footer class="page-footer teal">
+    <div class="container">
+      <div class="row">
+        <div class="col l6 s12">
+          <h5 class="white-text">Company Bio</h5>
+          <p class="grey-text text-lighten-4">We are a team of college students working on this project like it's our full time job. Any amount would help support and continue development on this project and is greatly appreciated.</p>
+        </div>
+        <div class="col l3 s12">
+          <h5 class="white-text">Settings</h5>
+          <ul>
+            <li><a class="white-text" href="#!">Link 1</a></li>
+            <li><a class="white-text" href="#!">Link 2</a></li>
+            <li><a class="white-text" href="#!">Link 3</a></li>
+            <li><a class="white-text" href="#!">Link 4</a></li>
+          </ul>
+        </div>
+        <div class="col l3 s12">
+          <h5 class="white-text">Connect</h5>
+          <ul>
+            <li><a class="white-text" href="#!">Link 1</a></li>
+            <li><a class="white-text" href="#!">Link 2</a></li>
+            <li><a class="white-text" href="#!">Link 3</a></li>
+            <li><a class="white-text" href="#!">Link 4</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="footer-copyright">
+      <div class="container">
+      Made by <a class="brown-text text-lighten-3" href="http://materializecss.com">Materialize</a>
+      </div>
+    </div>
+  </footer>
+  </body>
+  <!-- Scripts executed after DOM is built !-->
+  <script type="text/javascript">
+    $('#time').clockpicker({
+      placement: 'bottom',
+      align: 'left',
+      twelvehour: false
     });
-  }
-}
-
-
-function findPlaces(searchIndex) {
-  var type = document.getElementById('type').value;
-  var keyword = document.getElementById('keyword').value;
-  var name = document.getElementById('name').value;
-  var request = {
-    bounds: boxes[searchIndex],
-  };
-  if (!!type && (type != "")) {
-    if (type.indexOf(',') > 0)
-      request.types = type.split(',');
-    else
-      request.types = [type];
-  }
-  if (!!keyword && (keyword != "")) request.keyword = keyword;
-  if (!!name && (name != "")) request.name = name;
-  service.radarSearch(request, function(results, status) {
-    if (status == google.maps.places.PlacesServiceStatus.OK) {
-      document.getElementById('side_bar').innerHTML += "bounds[" + searchIndex + "] returns " + results.length + " results<br>"
-      for (var i = 0, result; result = results[i]; i++) {
-        var marker = createMarker(result);
-      }
-    } else {
-      document.getElementById('side_bar').innerHTML += "bounds[" + searchIndex + "] returns 0 results<br>&nbsp;status=" + status + "<br>";
-    }
-    if (status != google.maps.places.PlacesServiceStatus.OVER_QUERY_LIMIT) {
-      searchIndex++;
-      if (searchIndex < boxes.length)
-        findPlaces(searchIndex);
-    } else { // delay 1 second and try again
-      setTimeout("findPlaces(" + searchIndex + ")", 1000);
-    }
-
-  });
-}
-
-// Clear boxes currently on the map
-function clearBoxes() {
-  if (boxpolys != null) {
-    for (var i = 0; i < boxpolys.length; i++) {
-      boxpolys[i].setMap(null);
-    }
-  }
-  boxpolys = null;
-}
-
-function createMarker(place) {
-  var placeLoc = place.geometry.location;
-  if (place.icon) {
-    var image = new google.maps.MarkerImage(
-      place.icon, new google.maps.Size(71, 71),
-      new google.maps.Point(0, 0), new google.maps.Point(17, 34),
-      new google.maps.Size(25, 25));
-  } else var image = {
-    url: "https://maps.gstatic.com/intl/en_us/mapfiles/markers2/measle.png",
-    size: new google.maps.Size(7, 7),
-    anchor: new google.maps.Point(3.5, 3.5)
-  };
-
-  var marker = new google.maps.Marker({
-    map: map,
-    icon: image,
-    position: place.geometry.location
-  });
-  var request = {
-    reference: place.reference
-  };
-  google.maps.event.addListener(marker, 'click', function() {
-    service.getDetails(request, function(place, status) {
-      if (status == google.maps.places.PlacesServiceStatus.OK) {
-        var contentStr = '<h5>' + place.name + '</h5><p>' + place.formatted_address;
-        if (!!place.formatted_phone_number) contentStr += '<br>' + place.formatted_phone_number;
-        if (!!place.website) contentStr += '<br><a target="_blank" href="' + place.website + '">' + place.website + '</a>';
-        contentStr += '<br>' + place.types + '</p>';
-        infowindow.setContent(contentStr);
-        infowindow.open(map, marker);
-      } else {
-        var contentStr = "<h5>No Result, status=" + status + "</h5>";
-        infowindow.setContent(contentStr);
-        infowindow.open(map, marker);
-      }
-    });
-
-  });
-  gmarkers.push(marker);
-  if (!place.name) place.name = "result " + gmarkers.length;
-  var side_bar_html = "<a href='javascript:google.maps.event.trigger(gmarkers[" + parseInt(gmarkers.length - 1) + "],\"click\");'>" + place.name + "</a><br>";
-  document.getElementById('side_bar').innerHTML += side_bar_html;
-}
-
-google.maps.event.addDomListener(window, 'load', initialize);
-</script>
-
-<table border="1">
-  <tr>
-    <td valign="top">
-      <div id="map" style="width: 600px; height: 500px;"></div>
-    </td>
-    <td>
-      <div id="side_bar" style="width:200px; height: 600px; overflow: auto"></div>
-    </td>
-  </tr>
-</table>
-Box within at least
-<input type="text" id="distance" value="3" size="2">miles of the route from
-<input type="text" id="from" value="denver" />to
-<input type="text" id="to" value="oklahoma city, OK" />
-<input type="submit" onclick="route()" />
-<br>
-<label>type</label>
-<input type="text" id="type" value="gas_station" />
-<label>keyword</label>
-<input type="text" id="keyword" value="" />
-<label>name</label>
-<input type="text" id="name" value="" />
-<div id="towns"></div>
+  </script>
+</html>
