@@ -126,11 +126,12 @@ function findPlaces(searchIndex) {
     else
       request.types = [type];
   }
+  document.getElementById('side_bar').innerHTML += "boxes are: " + boxes + "<br>"
   if (!!keyword && (keyword != "")) request.keyword = keyword;
   if (!!name && (name != "")) request.name = name;
   service.radarSearch(request, function(results, status) {
     if (status == google.maps.places.PlacesServiceStatus.OK) {
-      document.getElementById('side_bar').innerHTML += "bounds[" + searchIndex + "] with bounds " + boxes[searchIndex] + " returns " + results.length + " results<br>"
+      document.getElementById('side_bar').innerHTML += "bounds[" + searchIndex + "] returns " + results.length + " results<br>"
       for (var i = 0, result; result = results[i]; i++) {
         var marker = createMarker(result);
       }
