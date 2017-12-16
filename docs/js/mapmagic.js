@@ -84,9 +84,9 @@ function route() {
   directionService.route(request, function(result, status) {
     if (status == google.maps.DirectionsStatus.OK) {
       directionsRenderer.setDirections(result);
-      document.getElementById('side_bar').innerHTML += path;
       // Box around the overview path of the first route
       var path = result.routes[0].overview_path;
+      document.getElementById('side_bar').innerHTML += path;
       boxes = routeBoxer.box(path, distance);
       // alert(boxes.length);
       drawBoxes();
