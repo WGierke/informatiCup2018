@@ -2,6 +2,7 @@ import pandas as pd
 import datetime as dt
 import os
 from shapely.geometry import LineString, MultiPoint
+from flask import request
 
 import sys
 
@@ -43,7 +44,6 @@ def predict_price(id, time):
     # TODO models will be called here
     return 1.30
 
-@app.route("/fill_prediction/google/")
 def get_fill_instructions_for_google_path(orig_path, path_length_km, start_time, speed_kmh, capacity_l, start_fuel_l):
     assert start_fuel_l <= capacity_l
 
@@ -86,12 +86,21 @@ def get_fill_instructions_for_google_path(orig_path, path_length_km, start_time,
             'payment': list(stops.payment.values),
             'overall_price': result.price}
 
-@app.route('/test/')
+@app.route('/prediction')
 def test():
-    return {'hi':42}
+    path=request.args.get('path',default=None,type=str)
+    length = request.args.get('length', default=None, type=str)
+    start_time = dt.datetime.now()
+    speed = request.args.get('speed',default=50,type=int)
+    fuel=request.args.get('fuel',default=1,type=int)
+    capacity = request.args.get('capacity',default=50,type=int)
+    if path == None or length == None:
+        return 'Eroorrrrrororororo :O'
+    
+    return print(get_fill_instructions_for_google_path(path, path_length_km=length, start_time=start_time, speed_kmh=speed,
+                                                capacity_l=capacity, start_fuel_l=fuel))
 
 
-@app.route("/fill_prediction/berta/")
 def get_fill_instructions_for_route(path_to_file, start_fuel=0):
     with open(path_to_file, 'r') as f:
         capacity = float(f.readline())
