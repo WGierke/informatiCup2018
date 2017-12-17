@@ -21,6 +21,9 @@ def get_prediction_for_route():
 
 @app.route('/prediction/google', methods=['POST'])
 def get_prediction():
+    if request.json is None:
+        return "Error: No JSON has been provided"
+
     required_keys = {'length', 'speed', 'fuel', 'capacity'}
     missing_keys = set(request.json.keys()) - required_keys
     if missing_keys:
