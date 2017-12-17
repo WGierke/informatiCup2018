@@ -1,14 +1,17 @@
-import pandas as pd
-import datetime as dt
 import os
-from shapely.geometry import LineString, MultiPoint
+import sys
+sys.path.append('..')
+
+from flask import Flask
 from flask import request
 
-import sys
+from shapely.geometry import LineString, MultiPoint
+import pandas as pd
+import datetime as dt
 
-sys.path.append('..')
 from fixed_path_gas_station import fixed_path_gas_station as fpgs
-from flask import Flask
+
+
 app = Flask(__name__)
 
 ### Prepare data, using buffer approach from 3.0-fb-organize_gas_stations.ipynb
@@ -43,6 +46,7 @@ def _get_gas_station_points_near_path(path, radius=0.02):
 def predict_price(id, time):
     # TODO models will be called here
     return 1.30
+
 
 def get_fill_instructions_for_google_path(orig_path, path_length_km, start_time, speed_kmh, capacity_l, start_fuel_l):
     assert start_fuel_l <= capacity_l
@@ -86,20 +90,6 @@ def get_fill_instructions_for_google_path(orig_path, path_length_km, start_time,
             'payment': list(stops.payment.values),
             'overall_price': result.price}
 
-@app.route('/prediction')
-def test():
-    path=request.args.get('path',default=None,type=str)
-    length = request.args.get('length', default=None, type=str)
-    start_time = dt.datetime.now()
-    speed = request.args.get('speed',default=50,type=int)
-    fuel=request.args.get('fuel',default=1,type=int)
-    capacity = request.args.get('capacity',default=50,type=int)
-    if path == None or length == None:
-        return 'Eroorrrrrororororo :O'
-    
-    return print(get_fill_instructions_for_google_path(path, path_length_km=length, start_time=start_time, speed_kmh=speed,
-                                                capacity_l=capacity, start_fuel_l=fuel))
-
 
 def get_fill_instructions_for_route(path_to_file, start_fuel=0):
     with open(path_to_file, 'r') as f:
@@ -130,7 +120,28 @@ def get_fill_instructions_for_route(path_to_file, start_fuel=0):
             'overall_price': result.price}
 
 
+@app.route('/prediction')
+def get_prediction():
+    path = eval(request.args.get('path', default=None, type=str))
+    length = eval(request.args.get('length', default=None, type=str))
+    start_time = dt.datetime.now()
+    speed = request.args.get('speed', default=50, type=int)
+    fuel = request.args.get('fuel', default=1, type=int)
+    capacity = request.args.get('capacity', default=50, type=int)
+    if path == None or length == None:
+        return 'We need a path and its length for estimation. '
+
+    return print(
+        get_fill_instructions_for_google_path(path, path_length_km=length, start_time=start_time, speed_kmh=speed,
+                                              capacity_l=capacity, start_fuel_l=fuel))
+
+
 if __name__ == '__main__':
+    # Run flask server with
+    #   FLASK_APP=api.py flask run --host=0.0.0.0"
+    # and request with
+    # server:port/prediction?path=<google_path_var>&length=<google_path_length>
+
     print('Potsdam Route')
     path_potsdam_berlin = [(52.390530000000005, 13.064540000000001), (52.39041, 13.065890000000001),
                            (52.39025, 13.06723), (52.39002000000001, 13.068810000000001),
