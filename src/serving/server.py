@@ -1,5 +1,7 @@
 import datetime as dt
-
+import os
+import sys
+sys.path.insert(0, os.getcwd())
 from flask import Flask, request, jsonify
 
 import src.serving.route_prediction as prediction
@@ -37,4 +39,4 @@ def get_prediction():
 
 
 if __name__ == "__main__":
-    app.run()
+    app.run(host='0.0.0.0')
