@@ -7,6 +7,8 @@ import sys
 
 sys.path.append('..')
 from fixed_path_gas_station import fixed_path_gas_station as fpgs
+from flask import Flask
+app = Flask(__name__)
 
 ### Prepare data, using buffer approach from 3.0-fb-organize_gas_stations.ipynb
 GAS_STATIONS_PATH = os.path.join('..', '..', 'data', 'raw', 'input_data', 'Eingabedaten', 'Tankstellen.csv')
@@ -41,7 +43,7 @@ def predict_price(id, time):
     # TODO models will be called here
     return 1.30
 
-
+@app.route("/fill_prediction/google/")
 def get_fill_instructions_for_google_path(orig_path, path_length_km, start_time, speed_kmh, capacity_l, start_fuel_l):
     assert start_fuel_l <= capacity_l
 
@@ -84,7 +86,12 @@ def get_fill_instructions_for_google_path(orig_path, path_length_km, start_time,
             'payment': list(stops.payment.values),
             'overall_price': result.price}
 
+@app.route('/test/')
+def test():
+    return {'hi':42}
 
+
+@app.route("/fill_prediction/berta/")
 def get_fill_instructions_for_route(path_to_file, start_fuel=0):
     with open(path_to_file, 'r') as f:
         capacity = float(f.readline())
