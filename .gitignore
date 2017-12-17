@@ -1,6 +1,4 @@
-# Data
-data/raw/input_data/
-data/raw/output_data/
+# Datagit
 *.pyc
 __pycache__
 
