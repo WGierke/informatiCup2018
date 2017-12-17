@@ -1,6 +1,8 @@
 # Data
 data/raw/input_data/
 data/raw/output_data/
+*.pyc
+__pycache__
 
 # Virtual Environment
 venv*
