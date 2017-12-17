@@ -1,9 +1,8 @@
-import os
-import sys
-
-from shapely.geometry import LineString, MultiPoint
-import pandas as pd
 import datetime as dt
+import os
+
+import pandas as pd
+from shapely.geometry import LineString, MultiPoint
 
 from src.fixed_path_gas_station import fixed_path_gas_station as fpgs
 

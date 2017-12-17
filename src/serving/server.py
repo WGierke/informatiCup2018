@@ -1,27 +1,29 @@
-import os
-import sys
-import src.serving.route_prediction as prediction
-
 import datetime as dt
 
 from flask import Flask, request, jsonify
 
+import src.serving.route_prediction as prediction
+
 app = Flask(__name__)
+
 
 @app.route('/prediction/berta', methods=['POST'])
 def get_prediction_for_route():
     fuel = request.args.get('fuel', default=0, type=int)
-
-    if request.method == 'POST':
-        f = request.files['route']
-        result = prediction.get_fill_instructions_for_route(f, start_fuel=fuel)
-        print(result)
-        return jsonify(result)
-    return 'Error'
+    f = request.files['route']
+    result = prediction.get_fill_instructions_for_route(f, start_fuel=fuel)
+    print(result)
+    return jsonify(result)
 
 
-@app.route('/prediction/google', methods=['GET', 'POST'])
+
+@app.route('/prediction/google', methods=['POST'])
 def get_prediction():
+    required_keys = {'length', 'speed', 'fuel', 'capacity'}
+    missing_keys = set(request.json.keys()) - required_keys
+    if missing_keys:
+        return "Error: also expected this key(s): {}".format(missing_keys)
+
     val = request.json
     path = [(p[0], p[1]) for p in val['path']]
     length = val['length']

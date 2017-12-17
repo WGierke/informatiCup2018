@@ -21,3 +21,6 @@ documentation.dvi
 
 # Jupyter
 notebooks/.ipynb_checkpoints/
+
+# PyCharm
+.idea
