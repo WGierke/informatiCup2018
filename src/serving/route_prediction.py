@@ -1,18 +1,13 @@
 import os
 import sys
-sys.path.append('..')
 
-from flask import Flask
-from flask import request
+sys.path.append('..')
 
 from shapely.geometry import LineString, MultiPoint
 import pandas as pd
 import datetime as dt
 
 from fixed_path_gas_station import fixed_path_gas_station as fpgs
-
-
-app = Flask(__name__)
 
 ### Prepare data, using buffer approach from 3.0-fb-organize_gas_stations.ipynb
 GAS_STATIONS_PATH = os.path.join('..', '..', 'data', 'raw', 'input_data', 'Eingabedaten', 'Tankstellen.csv')
@@ -81,8 +76,7 @@ def get_fill_instructions_for_google_path(orig_path, path_length_km, start_time,
     positions_df['fill_liters'] = result.fill_liters
     positions_df['payment'] = positions_df.price * result.fill_liters
     stops = positions_df[positions_df.payment != 0]
-    return {'msg': 'Have a good time!',
-            'start': orig_path[0],
+    return {'start': orig_path[0],
             'end': orig_path[-1],
             'stops': list(stops.orig_position.apply(lambda p: (p.y, p.x)).values),
             'prices': list(stops.price.values),
@@ -91,10 +85,9 @@ def get_fill_instructions_for_google_path(orig_path, path_length_km, start_time,
             'overall_price': result.price}
 
 
-def get_fill_instructions_for_route(path_to_file, start_fuel=0):
-    with open(path_to_file, 'r') as f:
-        capacity = float(f.readline())
-    route = pd.read_csv(path_to_file, names=['Timestamp_str', 'Gas_Station_Id'], sep=';', skiprows=1)
+def get_fill_instructions_for_route(f, start_fuel=0):
+    capacity = float(f.readline())
+    route = pd.read_csv(f, names=['Timestamp_str', 'Gas_Station_Id'], sep=';')
     route['Timestamp'] = route['Timestamp_str'].apply(lambda x: pd.Timestamp(x))
     cost = []
     coordinates = []
@@ -110,8 +103,7 @@ def get_fill_instructions_for_route(path_to_file, start_fuel=0):
     route['payment'] = route.fill_liters * route.cost
     stops = route[route.fill_liters != 0]
 
-    return {'msg': 'not yet implemented',
-            'start': tuple(route.iloc[0]['coords']),
+    return {'start': tuple(route.iloc[0]['coords']),
             'end': tuple(route.iloc[-1]['coords']),
             'stops': list(stops.coords.apply(lambda coord: tuple(coord)).values),
             'prices': list(stops.cost.values),
@@ -120,25 +112,9 @@ def get_fill_instructions_for_route(path_to_file, start_fuel=0):
             'overall_price': result.price}
 
 
-@app.route('/prediction')
-def get_prediction():
-    path = eval(request.args.get('path', default=None, type=str))
-    length = eval(request.args.get('length', default=None, type=str))
-    start_time = dt.datetime.now()
-    speed = request.args.get('speed', default=50, type=int)
-    fuel = request.args.get('fuel', default=1, type=int)
-    capacity = request.args.get('capacity', default=50, type=int)
-    if path == None or length == None:
-        return 'We need a path and its length for estimation. '
-
-    return print(
-        get_fill_instructions_for_google_path(path, path_length_km=length, start_time=start_time, speed_kmh=speed,
-                                              capacity_l=capacity, start_fuel_l=fuel))
-
-
 if __name__ == '__main__':
     # Run flask server with
-    #   FLASK_APP=api.py flask run --host=0.0.0.0"
+    #   FLASK_APP=route_prediction.py flask run --host=0.0.0.0"
     # and request with
     # server:port/prediction?path=<google_path_var>&length=<google_path_length>
 
@@ -319,4 +295,5 @@ if __name__ == '__main__':
     print('Bertas Route')
     ROUTE_PATH = os.path.join('..', '..', 'data', 'raw', 'input_data', 'Eingabedaten', 'Fahrzeugrouten')
     BERTA_ROUTE_PATH = os.path.join(ROUTE_PATH, 'Bertha Benz Memorial Route.csv')
-    print(get_fill_instructions_for_route(BERTA_ROUTE_PATH))
+    with open(BERTA_ROUTE_PATH, 'r') as f:
+        print(get_fill_instructions_for_route(f))
