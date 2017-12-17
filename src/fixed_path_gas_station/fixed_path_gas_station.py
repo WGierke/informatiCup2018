@@ -27,7 +27,8 @@ class Coordinate:
             sin(self.lat) * sin(b.lat) + cos(self.lat) * cos(b.lat) * cos(b.long - self.long))
 
     def __iter__(self):
-        return [degrees(self.lat),degrees(self.long)].__iter__()
+        return [degrees(self.lat), degrees(self.long)].__iter__()
+
 
 class MinHeap:
     """
@@ -84,6 +85,8 @@ class FixedPathGasStation:
     def check_assumptions(self):
         if len(list(filter(lambda dist: dist > self.km_capacity, self.segment_distance))) != 0:
             raise AssertionError('Capacity is not enough to drive from every station to next.')
+        if self.start_fuel > self.liter_capacity:
+            raise AssertionError('Your tank starts with more fuel tan it can hold.')
 
     def d(self, a, b):
         if a == b:
@@ -107,10 +110,10 @@ class FixedPathGasStation:
         self.compute_price()
         return self.price
 
-    def km2lit(self,km):
+    def km2lit(self, km):
         return (km / 100) * self.liter_per_100_km
 
-    def lit2km(self,liter):
+    def lit2km(self, liter):
         return (liter / self.liter_per_100_km) * 100
 
     def compute_next_prev(self):
@@ -178,7 +181,7 @@ class FixedPathGasStation:
         fill_liters = len(self.path) * [0]
         for i, f in enumerate(self.fill_command_km):
             if f == 'fill up':
-                fill_liters[i] = self.liter_capacity - fuel
+                fill_liters[i] = max(0, self.liter_capacity - fuel)
             else:
                 fill_liters[i] = max(0, self.km2lit(f) - fuel)
             fuel = fuel + fill_liters[i] - self.km2lit(self.segment_distance[i])
@@ -190,5 +193,6 @@ class FixedPathGasStation:
     def __str__(self):
         display_format = "{}: {}"
         to_be_printed = [('next', self.next), ('prev', self.prev), ('break_points', self.break_points),
-                         ('price', self.price), ('fill_amount', self.fill_liters), ('fill_command in km', self.fill_command_km)]
+                         ('price', self.price), ('fill_amount', self.fill_liters),
+                         ('fill_command in km', self.fill_command_km)]
         return 'Solution uses:\n' + '\n'.join([display_format.format(name, var) for name, var in to_be_printed])
