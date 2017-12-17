@@ -1,14 +1,10 @@
 import os
 import sys
-
-sys.path.append('..')
-import route_prediction as prediction
+import src.serving.route_prediction as prediction
 
 import datetime as dt
 
 from flask import Flask, request, jsonify
-
-TEMP_DIR = ''
 
 app = Flask(__name__)
 

@@ -1,16 +1,14 @@
 import os
 import sys
 
-sys.path.append('..')
-
 from shapely.geometry import LineString, MultiPoint
 import pandas as pd
 import datetime as dt
 
-from fixed_path_gas_station import fixed_path_gas_station as fpgs
+from src.fixed_path_gas_station import fixed_path_gas_station as fpgs
 
 ### Prepare data, using buffer approach from 3.0-fb-organize_gas_stations.ipynb
-GAS_STATIONS_PATH = os.path.join('..', '..', 'data', 'raw', 'input_data', 'Eingabedaten', 'Tankstellen.csv')
+GAS_STATIONS_PATH = os.path.join('data', 'raw', 'input_data', 'Eingabedaten', 'Tankstellen.csv')
 
 gas_stations = pd.read_csv(GAS_STATIONS_PATH, sep=';',
                            names=['id', 'Name', 'Company', 'Street', 'House_Number', 'Postalcode', 'City', 'Lat',
