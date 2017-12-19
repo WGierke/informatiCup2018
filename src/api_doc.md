@@ -31,13 +31,13 @@
   Algorithm terminated and found a result.
   
   * **Code:** 200 <br />
-    **Content:** `{'start': [4,54] - startcoordinate,
+    **Content:** ```{'start': [4,54] - startcoordinate,
             'end': [6,52] - endcoordinate,
             'stops': [[6,51],[7,53],...] - coordinates on filling stations on way,
             'prices': [1.12,1.23,1.10,...] - predicted prices at those stations,
             'fill_liters': [3,4.23,.0,...] - liters that musst be filled up,
             'payment': [12.4,12.5,12.4,...] - price tat will be paid at gas_station.
-            'overall_price': 100.23 - overall price}`
+            'overall_price': 100.23 - overall price}```
  
 * **Error Response:**
 
