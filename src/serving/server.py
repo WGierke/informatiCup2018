@@ -11,10 +11,23 @@ app = Flask(__name__)
 
 @app.route('/prediction/berta', methods=['POST'])
 def get_prediction_for_route():
-    fuel = request.args.get('fuel', default=0, type=int)
+    if request.json is None:
+        return "Error: No JSON has been provided"
+
+    required_keys = {'fuel'}
+    missing_keys = set(request.json.keys()) - required_keys
+    if missing_keys:
+        return "Error: also expected this key(s): {}".format(missing_keys)
+
+    val = request.json
+    fuel = val['fuel']
+
+    if request.file is None:
+        return "Error: No FILE containing the route has been uploaded"
+
     f = request.files['route']
     result = prediction.get_fill_instructions_for_route(f, start_fuel=fuel)
-    print(result)
+
     return jsonify(result)
 
 
