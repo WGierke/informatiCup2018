@@ -91,6 +91,41 @@ function route() {
       // alert(boxes.length);
       drawBoxes();
       findPlaces(0);
+
+      // Do the back-end request
+      var length = 100; //todo
+      var speed = 80; //todo
+      var fuel = $("#fuel").val();
+      var capacity = $("#tank").val();
+      var startTime = $("#time").val();
+      var mappedPath = new Array(path.length);
+      for (var i = 0; i < mappedPath.length; i++) {
+        mappedPath[i] = [path[i].lat(), path[i].lng()]
+      }
+
+      var routeData = {
+          length: length,
+          start_time: startTime,
+          speed: speed,
+          fuel: fuel,
+          capacity: capacity,
+          path: mappedPath
+      };
+
+      $.ajax({
+          type: "POST",
+          url: "/prediction/google",
+          contentType: "application/json",
+          dataType: "json",
+          success: function (msg) {
+            alert(msg);
+          },
+          error: function (msg) {
+            console.log(msg)
+          },
+          data: JSON.stringify(routeData)
+      });
+
     } else {
       alert("Directions query failed: " + status);
     }
