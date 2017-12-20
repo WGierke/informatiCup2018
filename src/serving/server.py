@@ -1,8 +1,11 @@
 import datetime as dt
+import json
+import logging
 import os
 import sys
+
 sys.path.insert(0, os.getcwd())
-from flask import Flask, request, jsonify
+from flask import Flask, request
 
 import src.serving.route_prediction as prediction
 
@@ -12,43 +15,56 @@ respond_error = lambda message: {'error': message}
 algorithm_error = respond_error('Algorithm failed')
 
 
+def create_response(message, error=False, status=200):
+    if error:
+        return app.response_class(
+            response=json.dumps(respond_error(message)),
+            status=status,
+            mimetype='application/json'
+        )
+    return app.response_class(
+        response=respond_error(message),
+        status=status,
+        mimetype='application/json'
+    )
+
+
 @app.route('/prediction/berta', methods=['POST'])
 def get_prediction_for_route():
     if request.json is None:
-        return jsonify(respond_error("No JSON has been provided"), status=418)
+        return create_response("No JSON has been provided", error=True, status=400)
 
     required_keys = {'fuel'}
-    missing_keys = set(request.json.keys()) - required_keys
+    missing_keys = required_keys - set(request.json.keys())
     if missing_keys:
-        return jsonify(respond_error("Also expected this key(s): {}".format(missing_keys)), status=418)
+        return create_response("Also expected this key(s): {}".format(missing_keys), error=True, status=400)
 
     val = request.json
     fuel = val['fuel']
 
     if request.file is None:
-        return "Error: No FILE containing the route has been uploaded"
+        return create_response("No FILE containing the route has been uploaded", error=True, status=400)
 
     f = request.files['route']
 
     try:
         result = prediction.get_fill_instructions_for_route(f, start_fuel=fuel)
     except Exception as e:
-        print(e)
-        return jsonify(algorithm_error,status=500)
+        logging.log(e)
+        return create_response(algorithm_error, error=True, status=500)
 
-    return jsonify(result)
-
+    return create_response(result)
 
 
 @app.route('/prediction/google', methods=['POST'])
 def get_prediction():
-    if request.json is None:
-        return jsonify(respond_error("No JSON has been provided"), status=418)
+    if not request.json:
+        return create_response("No JSON has been provided", error=True, status=400)
 
     required_keys = {'length', 'speed', 'fuel', 'capacity'}
-    missing_keys = set(request.json.keys()) - required_keys
+    missing_keys = required_keys - set(request.json.keys())
     if missing_keys:
-        return jsonify(respond_error("Also expected this key(s): {}".format(missing_keys)),status=418)
+        return create_response("Also expected this key(s): {}".format(missing_keys), error=True, status=400)
 
     val = request.json
     path = [(p[0], p[1]) for p in val['path']]
@@ -59,12 +75,13 @@ def get_prediction():
     capacity = val['capacity']
     try:
         result = prediction.get_fill_instructions_for_google_path(path, path_length_km=length, start_time=start_time,
-                                                              speed_kmh=speed, capacity_l=capacity, start_fuel_l=fuel)
+                                                                  speed_kmh=speed, capacity_l=capacity,
+                                                                  start_fuel_l=fuel)
     except Exception as e:
-        print(e)
-        return jsonify(algorithm_error,status=500)
+        logging.log(e)
+        return create_response(algorithm_error, error=True, status=500)
 
-    return jsonify(result)
+    return create_response(result)
 
 
 if __name__ == "__main__":
