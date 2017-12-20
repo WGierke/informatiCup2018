@@ -6,10 +6,13 @@ import sys
 
 sys.path.insert(0, os.getcwd())
 from flask import Flask, request
+from flask import Flask, request, send_from_directory
 
 import src.serving.route_prediction as prediction
 
 app = Flask(__name__)
+app = Flask(__name__, static_url_path='')
+DOCS_DIR = os.path.abspath(os.path.join(os.getcwd(), 'docs'))
 
 respond_error = lambda message: {'error': message}
 algorithm_error = respond_error('Algorithm failed')
@@ -28,6 +31,16 @@ def create_response(message, error=False, status=200):
         mimetype='application/json'
     )
 
+
+@app.route('/', methods=['GET'])
+def root():
+    return send_from_directory(DOCS_DIR, 'index.html')
+
+@app.route('/static/<path:path>', methods=['GET'])
+def serve_file_in_dir(path):
+    if not os.path.isfile(os.path.join(DOCS_DIR, path)):
+        path = os.path.join(path, 'index.html')
+    return send_from_directory(DOCS_DIR, path)
 
 @app.route('/prediction/berta', methods=['POST'])
 def get_prediction_for_route():
