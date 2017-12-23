@@ -3,6 +3,7 @@ import os
 
 import pandas as pd
 from shapely.geometry import LineString, MultiPoint
+import numpy as np
 
 from src.fixed_path_gas_station import fixed_path_gas_station as fpgs
 
@@ -11,8 +12,9 @@ GAS_STATIONS_PATH = os.path.join('data', 'raw', 'input_data', 'Eingabedaten', 'T
 
 gas_stations = pd.read_csv(GAS_STATIONS_PATH, sep=';',
                            names=['id', 'Name', 'Company', 'Street', 'House_Number', 'Postalcode', 'City', 'Lat',
-                                  'Long'], usecols=['id', 'Lat', 'Long'], index_col='id')
-
+                                  'Long'], usecols=['id', 'Lat', 'Long','Name','Street','Postalcode','City','House_Number'], index_col='id')
+gas_stations['Adress'] = gas_stations.apply(lambda row:  '{} {}\n{} {}'.format(row['Street'],row['House_Number'],row['Postalcode'], row['City']),axis=1)
+gas_stations.drop(['Street','Postalcode','City','House_Number'],axis=1,inplace=True)
 
 def _hash_point(lat, long):
     # 0.000001 degree can distinguish humans
@@ -37,7 +39,7 @@ def _get_gas_station_points_near_path(path, radius=0.02):
 
 def predict_price(id, time):
     # TODO models will be called here
-    return 1.30
+    return 1.2 + np.random.poisson(lam=10) * 0.01
 
 
 def get_fill_instructions_for_google_path(orig_path, path_length_km, start_time, speed_kmh, capacity_l, start_fuel_l):
@@ -73,6 +75,7 @@ def get_fill_instructions_for_google_path(orig_path, path_length_km, start_time,
     result = fpgs.FixedPathGasStation(route, capacity_l, start_fuel_l)
     positions_df['fill_liters'] = result.fill_liters
     positions_df['payment'] = positions_df.price * result.fill_liters
+    #positions_df['name'] = positions_df[id]
     stops = positions_df[positions_df.payment != 0]
     return {'start': orig_path[0],
             'end': orig_path[-1],
@@ -80,6 +83,8 @@ def get_fill_instructions_for_google_path(orig_path, path_length_km, start_time,
             'prices': list(stops.price.values),
             'fill_liters': list(stops.fill_liters.values),
             'payment': list(stops.payment.values),
+            'address':list(stops.Adress.values),
+            'name':list(stops.Name.values),
             'overall_price': result.price}
 
 
@@ -96,7 +101,7 @@ def get_fill_instructions_for_route(f, start_fuel=0):
     route['cost'] = cost
     route['coords'] = coordinates
     result = fpgs.FixedPathGasStation(route, capacity, start_fuel)
-
+    # todo join on gas station id for adress
     route['fill_liters'] = result.fill_liters
     route['payment'] = route.fill_liters * route.cost
     stops = route[route.fill_liters != 0]
@@ -107,6 +112,8 @@ def get_fill_instructions_for_route(f, start_fuel=0):
             'prices': list(stops.cost.values),
             'fill_liters': list(stops.fill_liters.values),
             'payment': list(stops.payment.values),
+            'adress': list(stops.Adress.values),
+            'name': list(stops.Name.values),
             'overall_price': result.price}
 
 

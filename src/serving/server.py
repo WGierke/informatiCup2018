@@ -18,9 +18,10 @@ algorithm_error = respond_error('Algorithm failed')
 
 
 def create_response(message, error=False, status=200):
-    if error:
+    print(json.dumps(message))
+    if not error:
         return app.response_class(
-            response=json.dumps(respond_error(message)),
+            response=json.dumps(message),
             status=status,
             mimetype='application/json'
         )
@@ -96,8 +97,9 @@ def get_prediction():
         return create_response(algorithm_error, error=True, status=500)
 
     print(result)
-    return create_response(result)
-
+    response = create_response(result)
+    print(response)
+    return response
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0')
