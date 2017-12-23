@@ -22,7 +22,7 @@ def _hash_point(lat, long):
 
 gas_station_point_index = gas_stations.copy()
 gas_station_point_index['str_pos'] = gas_station_point_index.apply(lambda row: _hash_point(row.Lat, row.Long), axis=1)
-gas_station_point_index = gas_station_point_index.reset_index().set_index('str_pos')
+gas_station_point_index = gas_station_point_index.reset_index().set_index(['Lat','Long'])
 
 gas_station_points = MultiPoint(list(zip(gas_stations['Long'], gas_stations['Lat'])))
 
@@ -47,11 +47,12 @@ def get_fill_instructions_for_google_path(orig_path, path_length_km, start_time,
 
     # find close gas stations
     positions_df = pd.DataFrame({'orig_position': _get_gas_station_points_near_path(path)})
+    positions_df['Lat'] = positions_df['orig_position'].apply(lambda p: p.y)
+    positions_df['Long'] = positions_df['orig_position'].apply(lambda p: p.x)
+    positions_df = positions_df.set_index(['Lat','Long'])
     assert len(positions_df) > 1, 'We want at least one gas station'
-
-    positions_df['id'] = \
-        gas_station_point_index.loc[positions_df['orig_position'].apply(lambda p: _hash_point(p.y, p.x))]['id'].values
-
+    positions_df = positions_df.join(gas_station_point_index)
+    positions_df = positions_df.reset_index()
     # approximate them to the path and extimate arrival time
     positions_df['path_position'] = positions_df['orig_position'].apply(lambda p: closest_point_on_path(path, p))
     positions_df['distance_from_start'] = positions_df['orig_position'].apply(

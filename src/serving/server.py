@@ -63,6 +63,7 @@ def get_prediction_for_route():
         result = prediction.get_fill_instructions_for_route(f, start_fuel=fuel)
     except Exception as e:
         logging.error(e)
+        print(val)
         return create_response(algorithm_error, error=True, status=500)
 
     return create_response(result)
@@ -91,6 +92,7 @@ def get_prediction():
                                                                   start_fuel_l=fuel)
     except Exception as e:
         logging.error(e)
+        print(val)
         return create_response(algorithm_error, error=True, status=500)
 
     print(result)

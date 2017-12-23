@@ -71,14 +71,14 @@ function route() {
   // Clear any previous route boxes from the map
   clearBoxes();
 
-  // Convert the distance to box around the route from miles to km
-  distance = parseFloat(document.getElementById("distance").value) * 1.609344;
+  distance = parseFloat(document.getElementById("distance").value);
 
   var request = {
     origin: document.getElementById("from").value,
     destination: document.getElementById("to").value,
-    travelMode: google.maps.DirectionsTravelMode.DRIVING
-  }
+    travelMode: google.maps.DirectionsTravelMode.DRIVING,
+      waypoints: [{location: "Werder an der Havel",stopover:false}]
+  };
 
   // Make the directions request
   directionService.route(request, function(result, status) {
@@ -86,15 +86,14 @@ function route() {
       directionsRenderer.setDirections(result);
       // Box around the overview path of the first route
       var path = result.routes[0].overview_path;
-      document.getElementById('side_bar').innerHTML += path;
       boxes = routeBoxer.box(path, distance);
       // alert(boxes.length);
       drawBoxes();
       findPlaces(0);
 
       // Do the back-end request
-      var length = 100; //todo
-      var speed = 80; //todo
+      var length = "100"; //todo
+      var speed = $("#speed").val(); //todo
       var fuel = $("#fuel").val();
       var capacity = $("#tank").val();
       var startTime = $("#time").val();
@@ -118,10 +117,12 @@ function route() {
           contentType: "application/json",
           dataType: "json",
           success: function (msg) {
+            document.getElementById('side_bar').innerHTML += msg;
             alert(msg);
           },
           error: function (msg) {
             console.log(msg)
+
           },
           data: JSON.stringify(routeData)
       });
