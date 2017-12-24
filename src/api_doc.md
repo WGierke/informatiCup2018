@@ -41,12 +41,12 @@
  
 * **Error Response:**
 
-  * **Code:** 418 I'm a teapot <br />
+  * **Code:** 400 Bad Request <br />
     **Content:** `{ error : "No JSON has been provided" }`
 
   OR
   
-  * **Code:** 418 I'm a teapot <br />
+  * **Code:** 400 Bad Request <br />
     **Content:** `{ error : "Also expected this key(s): {}" }`
 
   * **Code:** 500 Internal Server Error <br />
