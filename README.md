@@ -48,3 +48,7 @@ Install all dependencies
 `pip install -r requirements.txt`  
 Start the server  
 `python3 src/serving/server.py`
+
+### Credits
+[Materialize](http://materializecss.com/)  
+[bootstrap-material-datetimepicker](https://github.com/T00rk/bootstrap-material-datetimepicker)
