@@ -57,6 +57,12 @@ def parse_arguments():
 def train(X_test, X_val, chkpt_path, features_placeholder, gpu_options, init, iterator, log_path, merged, next_elem,
           saver, seed, train_step):
     with tf.Session(config=tf.ConfigProto(gpu_options=gpu_options)) as sess:
+        if tf.train.latest_checkpoint(chkpt_path) is not None:
+            saver.restore(sess, tf.train.latest_checkpoint(chkpt_path))
+            print("Restored model from " + tf.train.latest_checkpoint(chkpt_path))
+        else:
+            raise AssertionError()
+
         train_writer = tf.summary.FileWriter(log_path + '/train', sess.graph)
         test_writer = tf.summary.FileWriter(log_path + '/test')
         val_writer = tf.summary.FileWriter(log_path + '/val')
