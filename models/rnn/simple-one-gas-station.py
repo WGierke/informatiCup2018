@@ -45,10 +45,10 @@ def parse_arguments():
     parser.add_argument("-n", "--name",
                         type=str,
                         help="Name of training")
-    parser.add_argument("--chkpt-path",
+    parser.add_argument("--chkpt_path",
                         type=str,
                         help="Path for saving the checkpoints")
-    parser.add_argument("--log-path",
+    parser.add_argument("--log_path",
                         type=str,
                         help="Path for saving the logs")
     return parser.parse_args()
@@ -61,7 +61,7 @@ def train(X_test, X_val, chkpt_path, features_placeholder, gpu_options, init, it
             saver.restore(sess, tf.train.latest_checkpoint(chkpt_path))
             print("Restored model from " + tf.train.latest_checkpoint(chkpt_path))
         else:
-            raise AssertionError()
+            print("No model was loaded")
 
         train_writer = tf.summary.FileWriter(log_path + '/train', sess.graph)
         test_writer = tf.summary.FileWriter(log_path + '/test')
@@ -195,8 +195,8 @@ def main():
     # Add ops to save and restore all the variables.
     saver = tf.train.Saver(keep_checkpoint_every_n_hours=0.10)
     name_of_training = args.name
-    log_path = args.log_path + name_of_training
-    chkpt_path = args.chkpt_path + name_of_training
+    log_path = args.log_path + "/" + name_of_training
+    chkpt_path = args.chkpt_path + "/" + name_of_training
 
     gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=args.memory)
 
