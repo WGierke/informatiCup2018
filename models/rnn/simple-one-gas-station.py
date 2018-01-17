@@ -96,7 +96,7 @@ def train(X_test, X_val, chkpt_path, features_placeholder, gpu_options, init, it
             train_writer.add_summary(summary, training_cycles)
 
 
-def define_model(dense_hidden_units, future_prediction, length_of_each_sequence, number_of_layers):
+def define_model(dense_hidden_units, future_prediction, length_of_each_sequence, number_of_layers, lstm_size):
     features_placeholder = tf.placeholder(tf.float32, [None, length_of_each_sequence, 1], name='features_placeholder')
     seed = tf.placeholder(tf.int64, shape=[])
 
@@ -153,7 +153,7 @@ def calculate_samples(gas_station_resampled, length_of_each_sequence):
 
 def build_dataset(X_train, batch_size, seed):
     dataset = tf.data.Dataset.from_tensor_slices(X_train)
-    dataset = dataset.shuffle(seed=seed)
+    dataset = dataset.shuffle(seed=seed, buffer_size=len(X_train)+1)
     dataset = dataset.batch(batch_size)
     iterator = dataset.make_initializable_iterator()
     next_elem = iterator.get_next()
@@ -161,8 +161,6 @@ def build_dataset(X_train, batch_size, seed):
 
 
 def main():
-
-
     args = parse_arguments()
 
     gas_station_id = args.gas_station
@@ -186,7 +184,7 @@ def main():
     X_val, X_test, _, _ = model_selection.train_test_split(X_test, X_test, test_size=0.75, shuffle=False, random_state=42)
 
     features_placeholder, seed, train_step = define_model(dense_hidden_units, future_prediction,
-                                                          length_of_each_sequence, number_of_layers)
+                                                          length_of_each_sequence, number_of_layers, lstm_size)
 
     iterator, next_elem = build_dataset(X_train, batch_size, seed)
 
@@ -204,3 +202,6 @@ def main():
 
     train(X_test, X_val, chkpt_path, features_placeholder, gpu_options, init, iterator, log_path, merged, next_elem,
           saver, seed, train_step)
+
+if __name__ == "__main__":
+    main()
