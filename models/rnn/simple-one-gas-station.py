@@ -147,7 +147,7 @@ def calculate_samples(gas_station_resampled, length_of_each_sequence):
 
 def build_dataset(X_train, batch_size, seed):
     dataset = tf.data.Dataset.from_tensor_slices(X_train)
-    dataset = dataset.shuffle(buffer_size=batch_size * 10, seed=seed)
+    dataset = dataset.shuffle(seed=seed)
     dataset = dataset.batch(batch_size)
     iterator = dataset.make_initializable_iterator()
     next_elem = iterator.get_next()
