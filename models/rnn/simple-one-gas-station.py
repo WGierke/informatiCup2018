@@ -44,6 +44,12 @@ parser.add_argument( "-n", "--name",
                     type=str,
                     help="Name of training")
 args = parser.parse_args()
+    parser.add_argument("--chkpt-path",
+                        type=str,
+                        help="Path for saving the checkpoints")
+    parser.add_argument("--log-path",
+                        type=str,
+                        help="Path for saving the logs")
 
 gas_station_id = args.gas_station
 
