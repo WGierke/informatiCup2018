@@ -67,30 +67,90 @@ function initialize() {
 
 }
 
+function computeTotalDistance(result) {
+  var total = 0;
+  var myroute = result.routes[0];
+  for (var i = 0; i < myroute.legs.length; i++) {
+    total += myroute.legs[i].distance.value;
+  }
+  total = total / 1000;
+  return total;
+}
+
 function route() {
   // Clear any previous route boxes from the map
   clearBoxes();
 
-  // Convert the distance to box around the route from miles to km
-  distance = parseFloat(document.getElementById("distance").value) * 1.609344;
+  distance = parseFloat(document.getElementById("distance").value);
 
   var request = {
     origin: document.getElementById("from").value,
     destination: document.getElementById("to").value,
     travelMode: google.maps.DirectionsTravelMode.DRIVING
-  }
+  };
 
   // Make the directions request
   directionService.route(request, function(result, status) {
     if (status == google.maps.DirectionsStatus.OK) {
-      directionsRenderer.setDirections(result);
+      document.getElementById('side_bar').innerHTML = '';
+      // todo clear markers
+        map.markers = [];
+        qmarkers = [];
+      //directionsRenderer.setDirections(result);
       // Box around the overview path of the first route
       var path = result.routes[0].overview_path;
-      document.getElementById('side_bar').innerHTML += path;
-      boxes = routeBoxer.box(path, distance);
+      //boxes = routeBoxer.box(path, distance);
       // alert(boxes.length);
-      drawBoxes();
-      findPlaces(0);
+      //drawBoxes();
+      //findPlaces(0);
+      //directionService.route(request2, function(result2, status) {if (status == google.maps.DirectionsStatus.OK) {directionsRenderer.setDirections(result2);}});
+      // Do the back-end request
+      var length = "100"; //todo
+      var speed = $("#speed").val();
+      var fuel = $("#fuel").val();
+      var capacity = $("#tank").val();
+      var startTime = $("#time").val();
+      var mappedPath = new Array(path.length);
+      for (var i = 0; i < mappedPath.length; i++) {
+        mappedPath[i] = [path[i].lat(), path[i].lng()]
+      }
+
+      var routeData = {
+          length: length,
+          start_time: startTime,
+          speed: speed,
+          fuel: fuel,
+          capacity: capacity,
+          path: mappedPath
+      };
+
+      $.ajax({
+          type: "POST",
+          url: "/prediction/google",
+          contentType: "application/json",
+          dataType: "json",
+          success: function (data,success) {
+            // get waypoints of gas stations
+            var waypoints = new Array(data['stops'].length);
+            for (var i = 0; i < waypoints.length; i++) {
+              var loc = new google.maps.LatLng(data['stops'][i][0],data['stops'][i][1]);
+               waypoints[i] = {location: loc,stopover:false};
+               createGasStationMarker(loc,data['prices'][i],data['fill_liters'][i],data["name"][i],data["address"][i]); //todo replace adress and name
+            }
+            var request2 = {
+            origin: document.getElementById("from").value,
+            destination: document.getElementById("to").value,
+            travelMode: google.maps.DirectionsTravelMode.DRIVING,
+            waypoints: waypoints};
+
+            directionService.route(request2, function(result2, status) {if (status == google.maps.DirectionsStatus.OK) {directionsRenderer.setDirections(result2);}});
+          },
+          error: function (url, error, status) {
+            alert("Error" + error);
+          },
+          data: JSON.stringify(routeData)
+      });
+
     } else {
       alert("Directions query failed: " + status);
     }
@@ -200,6 +260,31 @@ function createMarker(place) {
   gmarkers.push(marker);
   if (!place.name) place.name = "result " + gmarkers.length;
   var side_bar_html = "<a href='javascript:google.maps.event.trigger(gmarkers[" + parseInt(gmarkers.length - 1) + "],\"click\");'>" + place.name + "</a><br>";
+  document.getElementById('side_bar').innerHTML += side_bar_html;
+}
+
+function createGasStationMarker(coords,price,fill_liters,name,adress) {
+  var placeLoc = coords;
+  var image = {
+    url: "https://maps.gstatic.com/intl/en_us/mapfiles/markers2/measle.png",
+    size: new google.maps.Size(7, 7),
+    anchor: new google.maps.Point(3.5, 3.5)
+  };
+
+  var marker = new google.maps.Marker({
+    map: map,
+    icon: image,
+    position: coords
+  });
+  google.maps.event.addListener(marker, 'click', function() {
+      var contentStr = '<h5>' + name + '</h5><p>Gas Price: ' + price + ' €<br>Fill: ' + fill_liters + ' l<br><br>' + adress + '</p>';
+      infowindow.setContent(contentStr);
+      infowindow.open(map, marker);
+  });
+  gmarkers.push(marker);
+
+ describtion = '[' + gmarkers.length + "] " + name + " | " + price + " €";
+  var side_bar_html = "<a href='javascript:google.maps.event.trigger(gmarkers[" + parseInt(gmarkers.length - 1) + "],\"click\");'>" + describtion + "</a><br>";
   document.getElementById('side_bar').innerHTML += side_bar_html;
 }
 

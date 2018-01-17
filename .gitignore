@@ -1,6 +1,6 @@
-# Data
-data/raw/input_data/
-data/raw/output_data/
+# Datagit
+*.pyc
+__pycache__
 
 # Virtual Environment
 venv*
@@ -19,3 +19,6 @@ documentation.dvi
 
 # Jupyter
 notebooks/.ipynb_checkpoints/
+
+# PyCharm
+.idea

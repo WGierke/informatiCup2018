@@ -1,20 +1,20 @@
-import pandas as pd
 import datetime as dt
 import os
+
+import pandas as pd
 from shapely.geometry import LineString, MultiPoint
+import numpy as np
 
-import sys
-
-sys.path.append('..')
-from fixed_path_gas_station import fixed_path_gas_station as fpgs
+from src.fixed_path_gas_station import fixed_path_gas_station as fpgs
 
 ### Prepare data, using buffer approach from 3.0-fb-organize_gas_stations.ipynb
-GAS_STATIONS_PATH = os.path.join('..', '..', 'data', 'raw', 'input_data', 'Eingabedaten', 'Tankstellen.csv')
+GAS_STATIONS_PATH = os.path.join('data', 'raw', 'input_data', 'Eingabedaten', 'Tankstellen.csv')
 
 gas_stations = pd.read_csv(GAS_STATIONS_PATH, sep=';',
                            names=['id', 'Name', 'Company', 'Street', 'House_Number', 'Postalcode', 'City', 'Lat',
-                                  'Long'], usecols=['id', 'Lat', 'Long'], index_col='id')
-
+                                  'Long'], usecols=['id', 'Lat', 'Long','Name','Street','Postalcode','City','House_Number'], index_col='id')
+gas_stations['Adress'] = gas_stations.apply(lambda row:  '{} {}\n{} {}'.format(row['Street'],row['House_Number'],row['Postalcode'], row['City']),axis=1)
+gas_stations.drop(['Street','Postalcode','City','House_Number'],axis=1,inplace=True)
 
 def _hash_point(lat, long):
     # 0.000001 degree can distinguish humans
@@ -24,7 +24,7 @@ def _hash_point(lat, long):
 
 gas_station_point_index = gas_stations.copy()
 gas_station_point_index['str_pos'] = gas_station_point_index.apply(lambda row: _hash_point(row.Lat, row.Long), axis=1)
-gas_station_point_index = gas_station_point_index.reset_index().set_index('str_pos')
+gas_station_point_index = gas_station_point_index.reset_index().set_index(['Lat','Long'])
 
 gas_station_points = MultiPoint(list(zip(gas_stations['Long'], gas_stations['Lat'])))
 
@@ -39,7 +39,7 @@ def _get_gas_station_points_near_path(path, radius=0.02):
 
 def predict_price(id, time):
     # TODO models will be called here
-    return 1.30
+    return 1.2 + np.random.poisson(lam=10) * 0.01
 
 
 def get_fill_instructions_for_google_path(orig_path, path_length_km, start_time, speed_kmh, capacity_l, start_fuel_l):
@@ -49,11 +49,12 @@ def get_fill_instructions_for_google_path(orig_path, path_length_km, start_time,
 
     # find close gas stations
     positions_df = pd.DataFrame({'orig_position': _get_gas_station_points_near_path(path)})
+    positions_df['Lat'] = positions_df['orig_position'].apply(lambda p: p.y)
+    positions_df['Long'] = positions_df['orig_position'].apply(lambda p: p.x)
+    positions_df = positions_df.set_index(['Lat','Long'])
     assert len(positions_df) > 1, 'We want at least one gas station'
-
-    positions_df['id'] = \
-        gas_station_point_index.loc[positions_df['orig_position'].apply(lambda p: _hash_point(p.y, p.x))]['id'].values
-
+    positions_df = positions_df.join(gas_station_point_index)
+    positions_df = positions_df.reset_index()
     # approximate them to the path and extimate arrival time
     positions_df['path_position'] = positions_df['orig_position'].apply(lambda p: closest_point_on_path(path, p))
     positions_df['distance_from_start'] = positions_df['orig_position'].apply(
@@ -74,21 +75,22 @@ def get_fill_instructions_for_google_path(orig_path, path_length_km, start_time,
     result = fpgs.FixedPathGasStation(route, capacity_l, start_fuel_l)
     positions_df['fill_liters'] = result.fill_liters
     positions_df['payment'] = positions_df.price * result.fill_liters
+    #positions_df['name'] = positions_df[id]
     stops = positions_df[positions_df.payment != 0]
-    return {'msg': 'Have a good time!',
-            'start': orig_path[0],
+    return {'start': orig_path[0],
             'end': orig_path[-1],
             'stops': list(stops.orig_position.apply(lambda p: (p.y, p.x)).values),
             'prices': list(stops.price.values),
             'fill_liters': list(stops.fill_liters.values),
             'payment': list(stops.payment.values),
+            'address':list(stops.Adress.values),
+            'name':list(stops.Name.values),
             'overall_price': result.price}
 
 
-def get_fill_instructions_for_route(path_to_file, start_fuel=0):
-    with open(path_to_file, 'r') as f:
-        capacity = float(f.readline())
-    route = pd.read_csv(path_to_file, names=['Timestamp_str', 'Gas_Station_Id'], sep=';', skiprows=1)
+def get_fill_instructions_for_route(f, start_fuel=0):
+    capacity = float(f.readline())
+    route = pd.read_csv(f, names=['Timestamp_str', 'Gas_Station_Id'], sep=';')
     route['Timestamp'] = route['Timestamp_str'].apply(lambda x: pd.Timestamp(x))
     cost = []
     coordinates = []
@@ -99,22 +101,28 @@ def get_fill_instructions_for_route(path_to_file, start_fuel=0):
     route['cost'] = cost
     route['coords'] = coordinates
     result = fpgs.FixedPathGasStation(route, capacity, start_fuel)
-
+    # todo join on gas station id for adress
     route['fill_liters'] = result.fill_liters
     route['payment'] = route.fill_liters * route.cost
     stops = route[route.fill_liters != 0]
 
-    return {'msg': 'not yet implemented',
-            'start': tuple(route.iloc[0]['coords']),
+    return {'start': tuple(route.iloc[0]['coords']),
             'end': tuple(route.iloc[-1]['coords']),
             'stops': list(stops.coords.apply(lambda coord: tuple(coord)).values),
             'prices': list(stops.cost.values),
             'fill_liters': list(stops.fill_liters.values),
             'payment': list(stops.payment.values),
+            'adress': list(stops.Adress.values),
+            'name': list(stops.Name.values),
             'overall_price': result.price}
 
 
 if __name__ == '__main__':
+    # Run flask server with
+    #   FLASK_APP=route_prediction.py flask run --host=0.0.0.0"
+    # and request with
+    # server:port/prediction?path=<google_path_var>&length=<google_path_length>
+
     print('Potsdam Route')
     path_potsdam_berlin = [(52.390530000000005, 13.064540000000001), (52.39041, 13.065890000000001),
                            (52.39025, 13.06723), (52.39002000000001, 13.068810000000001),
@@ -292,4 +300,5 @@ if __name__ == '__main__':
     print('Bertas Route')
     ROUTE_PATH = os.path.join('..', '..', 'data', 'raw', 'input_data', 'Eingabedaten', 'Fahrzeugrouten')
     BERTA_ROUTE_PATH = os.path.join(ROUTE_PATH, 'Bertha Benz Memorial Route.csv')
-    print(get_fill_instructions_for_route(BERTA_ROUTE_PATH))
+    with open(BERTA_ROUTE_PATH, 'r') as f:
+        print(get_fill_instructions_for_route(f))

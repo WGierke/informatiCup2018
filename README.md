@@ -10,7 +10,6 @@ Project Organization
     ├── README.md          <- The top-level README for developers using this project.
     ├── data
     │   ├── external       <- Data from third party sources.
-    │   ├── interim        <- Intermediate data that has been transformed.
     │   ├── processed      <- The final, canonical data sets for modeling.
     │   └── raw            <- The original, immutable data dump.
     │
@@ -31,9 +30,6 @@ Project Organization
     └── src                <- Source code for use in this project.
         ├── __init__.py    <- Makes src a Python module
         │
-        ├── data           <- Scripts to download or generate data
-        │   └── make_dataset.py
-        │
         ├── features       <- Scripts to turn raw data into features for modeling
         │   └── build_features.py
         │
@@ -46,3 +42,13 @@ Project Organization
             └── visualize.py
 
 --------
+### Setup
+
+Install all dependencies  
+`pip install -r requirements.txt`  
+Start the server  
+`python3 src/serving/server.py`
+
+### Credits
+[Materialize](http://materializecss.com/)  
+[bootstrap-material-datetimepicker](https://github.com/T00rk/bootstrap-material-datetimepicker)
