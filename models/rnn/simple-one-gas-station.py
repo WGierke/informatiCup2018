@@ -187,13 +187,16 @@ def main():
     dense_hidden_units = args.dense_hidden_units
     future_prediction = args.future_prediction
 
+    if args.additional_gas_stations is not None:
+        raise NotImplementedError("Have to implement additional gas stations")
+
     features = calculate_samples(gas_station_resampled, length_of_each_sequence)
     print("Number of training samples: " + str(len(features)))
 
-    X_train, X_test, _, _ = model_selection.train_test_split(features, features, test_size=0.4, shuffle=False,
+    X_train, X_intermediate, _, _ = model_selection.train_test_split(features, features, test_size=0.4, shuffle=False,
                                                              random_state=42)
     # Train is here validation set
-    X_val, X_test, _, _ = model_selection.train_test_split(X_test, X_test, test_size=0.75, shuffle=False, random_state=42)
+    X_val, X_test, _, _ = model_selection.train_test_split(X_intermediate, X_intermediate, test_size=0.75, shuffle=False, random_state=42)
 
     if args.additional_gas_stations is None:
         features_placeholder, seed, train_step = define_model(dense_hidden_units, future_prediction,
