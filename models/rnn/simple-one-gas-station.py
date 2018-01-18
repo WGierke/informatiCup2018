@@ -51,6 +51,10 @@ def parse_arguments():
     parser.add_argument("--log_path",
                         type=str,
                         help="Path for saving the logs")
+    parser.add_argument("--resampling",
+                        type=str,
+                        default=None,
+                        help="Resampling of data frame")
     return parser.parse_args()
 
 
@@ -166,7 +170,10 @@ def main():
     gas_station_id = args.gas_station
 
     gas_station = pd.read_csv(os.path.join(GAS_PRICE_PATH,'{}.csv'.format(gas_station_id)), names=['Timestamp', 'Price'],  index_col='Timestamp',parse_dates=['Timestamp'],sep=';')
-    gas_station_resampled = gas_station.resample('1T').bfill()
+    if args.resampling is not None:
+        gas_station_resampled = gas_station.resample(args.resampling).bfill()
+    else:
+        gas_station_resampled = gas_station
 
     lstm_size = args.lstm_size
     number_of_layers = args.layers
