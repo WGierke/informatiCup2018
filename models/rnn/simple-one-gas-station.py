@@ -55,6 +55,11 @@ def parse_arguments():
                         type=str,
                         default=None,
                         help="Resampling of data frame")
+    parser.add_argument('--additional_gas_stations',
+                        nargs='+',
+                        type=int,
+                        help="Additional gas stations which are feed into the model",
+                        default=None)
     return parser.parse_args()
 
 
@@ -100,8 +105,8 @@ def train(X_test, X_val, chkpt_path, features_placeholder, gpu_options, init, it
             train_writer.add_summary(summary, training_cycles)
 
 
-def define_model(dense_hidden_units, future_prediction, length_of_each_sequence, number_of_layers, lstm_size):
-    features_placeholder = tf.placeholder(tf.float32, [None, length_of_each_sequence, 1], name='features_placeholder')
+def define_model(dense_hidden_units, future_prediction, length_of_each_sequence, number_of_layers, lstm_size, number_of_additional_gas_stations=0):
+    features_placeholder = tf.placeholder(tf.float32, [None, length_of_each_sequence, 1 + number_of_additional_gas_stations], name='features_placeholder')
     seed = tf.placeholder(tf.int64, shape=[])
 
     def lstm_cell():
@@ -190,8 +195,13 @@ def main():
     # Train is here validation set
     X_val, X_test, _, _ = model_selection.train_test_split(X_test, X_test, test_size=0.75, shuffle=False, random_state=42)
 
-    features_placeholder, seed, train_step = define_model(dense_hidden_units, future_prediction,
-                                                          length_of_each_sequence, number_of_layers, lstm_size)
+    if args.additional_gas_stations is None:
+        features_placeholder, seed, train_step = define_model(dense_hidden_units, future_prediction,
+                                                              length_of_each_sequence, number_of_layers, lstm_size)
+    else:
+        features_placeholder, seed, train_step = define_model(dense_hidden_units, future_prediction,
+                                                              length_of_each_sequence, number_of_layers, lstm_size,
+                                                              len(args.additional_gas_stations))
 
     iterator, next_elem = build_dataset(X_train, batch_size, seed)
 
