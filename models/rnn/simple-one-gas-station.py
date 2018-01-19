@@ -17,12 +17,13 @@ gas_stations_df = pd.read_csv(GAS_STATIONS_PATH, sep=';', names=['id', 'Name', '
 def parse_arguments():
     global args
     parser = argparse.ArgumentParser()
-    parser.add_argument("-m", "--model",
+    parser.add_argument("--model",
                         type=str,
                         default=SIMPLE_RNN_MODEL,
                         help="Name of model, can be one of {}".format(str([SIMPLE_RNN_MODEL,EVENT_RNN_MODEL])))
     parser.add_argument("-g", "--gas_station",
                         type=int,
+                        required=True,
                         help="Number of gas station to learn on")
     parser.add_argument("--batch_size",
                         type=int,
@@ -34,6 +35,7 @@ def parse_arguments():
                         help="Number of LSTM layers")
     parser.add_argument("--lstm_size",
                         type=int,
+                        default=80,
                         help="Size of LSTM hidden state")
     parser.add_argument("--length_of_sequence",
                         default=200,
@@ -45,6 +47,7 @@ def parse_arguments():
                         help="Choose how much into the future should be predicted, '1' means the next value")
     parser.add_argument("--dense_hidden_units",
                         type=int,
+                        default=100,
                         help="Number of hidden units in dense layer before output layer")
     parser.add_argument("-m", "--memory",
                         default=1,
@@ -52,16 +55,19 @@ def parse_arguments():
                         help="Percentage of VRAM for this process, written as 0.")
     parser.add_argument("-n", "--name",
                         type=str,
+                        required=True,
                         help="Name of training")
     parser.add_argument("--chkpt_path",
                         type=str,
+                        required=True,
                         help="Path for saving the checkpoints")
     parser.add_argument("--log_path",
                         type=str,
+                        required=True,
                         help="Path for saving the logs")
     parser.add_argument("--resampling",
                         type=str,
-                        default=None,
+                        default='1D',
                         help="Resampling of data frame")
     parser.add_argument('--additional_gas_stations',
                         nargs='+',
@@ -71,7 +77,7 @@ def parse_arguments():
     parser.add_argument("--sequence_stride",
                         type=int,
                         help="At every sequence stride a new sequence is extracted for the training and test data.",
-                        default=0)
+                        default=1)
     return parser.parse_args()
 
 
@@ -138,7 +144,7 @@ def define_simple_rnn_model(dense_hidden_units, future_prediction, length_of_eac
     dense = tf.layers.dense(outputs[:, -1], dense_hidden_units, activation=tf.nn.relu, name='dense',
                             kernel_initializer=tf.truncated_normal_initializer(mean=0.001, stddev=0.1),
                             bias_initializer=tf.truncated_normal_initializer(mean=0.01, stddev=0.1))
-    y_ = tf.layers.dense(dense, 1, activation=None, name='y_',
+    y_ = tf.layers.dense(dense,  1 + number_of_additional_gas_stations, activation=None, name='y_',
                          kernel_initializer=tf.truncated_normal_initializer(mean=0.001, stddev=0.1),
                          bias_initializer=tf.truncated_normal_initializer(mean=0.01, stddev=0.1))
     learning_rate = 1e-4
@@ -237,7 +243,7 @@ def calculate_samples(gas_station_resampled, length_of_each_sequence):
 def combine_channels_and_generate_sequences(gas_station_series, sequence_length,sequence_stride=1):
     # input: list of gas stations [[t1,t2,t3,...],[b1,b2,v3...]]
     assert sequence_length >= 1, "Must use a positive sequence length, used {}.".format(sequence_length)
-    assert sequence_stride < 1, "Must use a positive stride, used {}.".format(sequence_stride)
+    assert sequence_stride > 0, "Must use a positive stride, used {}.".format(sequence_stride)
 
     features = []
     gas_stations = np.array(gas_station_series)
@@ -282,16 +288,16 @@ def main():
 
     if model == EVENT_RNN_MODEL:
 
-        if args.additional_gas_stations is not None:
+        if len(args.additional_gas_stations) > 0:
             raise NotImplementedError("Close gas stations not available for this model.")
 
-        if args.future_prediction is not None:
+        if args.future_prediction != 1:
             raise NotImplementedError("This model will only predict one next event.")
 
         deltas = pd.Series(gas_station_df.index[1:] - gas_station_df.index[:-1])
         deltas_in_minutes = deltas.apply(lambda x: x.round(frequency).total_seconds() / pd.Timedelta('1D').total_seconds())
-        event_deltas = np.append([0], deltas_in_minutes.values)
-        price = gas_station_df.values
+        event_deltas = np.append([0], deltas_in_minutes.values.flatten())
+        price = gas_station_df.values.flatten()
         features = combine_channels_and_generate_sequences([price, event_deltas],sequence_length=length_of_each_sequence,sequence_stride=sequence_stride)
         print("Number of training samples: {}".format(features.shape[0]))
         features_placeholder, seed, train_step = define_event_rnn_model(dense_hidden_units, length_of_each_sequence, number_of_layers, lstm_size)
@@ -306,19 +312,20 @@ def main():
         additional_gas_stations_resampled = []
         for id in additional_gas_station_ids:
             additional_df = load_station(id).resample(frequency).bfill()
-            additional_df_aligned = gas_station_resampled.align(additional_df)[1].fillna(0)[gas_station_resampled.index]
-            additional_gas_stations_resampled.append(additional_df_aligned)
+            additional_df_aligned = gas_station_resampled.align(additional_df)[1].fillna(0)[gas_station_resampled.index.min():gas_station_resampled.index.max()]
+            additional_gas_stations_resampled.append(additional_df_aligned.values.flatten())
 
-        print("Using {} as supplementary gas stations".format(', '.join(additional_gas_station_ids)))
+        print("Using {} as supplementary gas stations".format(', '.join(map(str,additional_gas_station_ids))))
 
-        #fetures is now numpy array - does it bother?
-        features = combine_channels_and_generate_sequences([gas_station_resampled] + additional_gas_stations_resampled, length_of_each_sequence,sequence_stride=sequence_stride)
+        features = combine_channels_and_generate_sequences([gas_station_resampled.values.flatten()] + additional_gas_stations_resampled, length_of_each_sequence,sequence_stride=sequence_stride)
         print("Number of training samples: {}".format(features.shape[0]))
 
-        features_placeholder, seed, train_step = define_simple_rnn_model(dense_hidden_units, future_prediction,
-                                                                         length_of_each_sequence, number_of_layers,
-                                                                         lstm_size,
-                                                                         len(additional_gas_station_ids))
+        features_placeholder, seed, train_step = define_simple_rnn_model(dense_hidden_units,
+                                                                         future_prediction=future_prediction,
+                                                                         length_of_each_sequence=length_of_each_sequence,
+                                                                         number_of_layers=number_of_layers,
+                                                                         lstm_size=lstm_size,
+                                                                         number_of_additional_gas_stations=len(additional_gas_station_ids))
     else:
         raise NotImplementedError("The model you wished for is not available, go implement it yourself.")
 
