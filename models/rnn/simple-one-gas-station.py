@@ -199,12 +199,12 @@ def main():
     X_val, X_test, _, _ = model_selection.train_test_split(X_intermediate, X_intermediate, test_size=0.75, shuffle=False, random_state=42)
 
     if args.additional_gas_stations is None:
-        features_placeholder, seed, train_step = define_model(dense_hidden_units, future_prediction,
-                                                              length_of_each_sequence, number_of_layers, lstm_size)
+        features_placeholder, seed, train_step = define_model_simple(dense_hidden_units, future_prediction,
+                                                                     length_of_each_sequence, number_of_layers, lstm_size)
     else:
-        features_placeholder, seed, train_step = define_model(dense_hidden_units, future_prediction,
-                                                              length_of_each_sequence, number_of_layers, lstm_size,
-                                                              len(args.additional_gas_stations))
+        features_placeholder, seed, train_step = define_model_simple(dense_hidden_units, future_prediction,
+                                                                     length_of_each_sequence, number_of_layers, lstm_size,
+                                                                     len(args.additional_gas_stations))
 
     iterator, next_elem = build_dataset(X_train, batch_size, seed)
 
