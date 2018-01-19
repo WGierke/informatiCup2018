@@ -60,7 +60,9 @@ def parse_arguments():
                         type=int,
                         help="Additional gas stations which are feed into the model",
                         default=None)
-    return parser.parse_args()
+    parser.add_argument('--change_point_model',
+                        action="store_true",
+                        help="Option to use the change point model")
 
 
 def train(X_test, X_val, chkpt_path, features_placeholder, gpu_options, init, iterator, log_path, merged, next_elem,
