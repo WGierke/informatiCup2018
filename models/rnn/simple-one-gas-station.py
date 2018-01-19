@@ -105,7 +105,7 @@ def train(X_test, X_val, chkpt_path, features_placeholder, gpu_options, init, it
             train_writer.add_summary(summary, training_cycles)
 
 
-def define_model(dense_hidden_units, future_prediction, length_of_each_sequence, number_of_layers, lstm_size, number_of_additional_gas_stations=0):
+def define_model_simple(dense_hidden_units, future_prediction, length_of_each_sequence, number_of_layers, lstm_size, number_of_additional_gas_stations=0):
     features_placeholder = tf.placeholder(tf.float32, [None, length_of_each_sequence, 1 + number_of_additional_gas_stations], name='features_placeholder')
     seed = tf.placeholder(tf.int64, shape=[])
 
@@ -131,6 +131,68 @@ def define_model(dense_hidden_units, future_prediction, length_of_each_sequence,
     learning_rate = 1e-4
     optimizer = tf.train.AdamOptimizer(learning_rate)
     predicted_labels = y_
+    # TODO: Are we sure with this?
+    true_labels = features_placeholder[:, -1]
+    assert predicted_labels.shape[1] == true_labels.shape[1], str(predicted_labels.shape[1]) + ' ' + str(
+        true_labels.shape[1])
+    cost = tf.reduce_sum(tf.squared_difference(predicted_labels, true_labels), name='cost')
+    tf.summary.scalar(name='cost', tensor=cost)
+    grads_and_vars = optimizer.compute_gradients(loss=cost)  # list of (gradient, variable) tuples
+    train_step = optimizer.apply_gradients(grads_and_vars)
+    mse = tf.sqrt(tf.reduce_mean(tf.square(tf.subtract(true_labels, predicted_labels))))
+    tf.summary.scalar(tensor=mse, name='MSE')
+    return features_placeholder, seed, train_step
+
+def define_model_change_time(dense_hidden_units, future_prediction, length_of_each_sequence, number_of_layers, lstm_size,):
+    """
+    Placeholder expects first the price and the time to the next change as input.
+
+    :param dense_hidden_units:
+    :param future_prediction:
+    :param length_of_each_sequence:
+    :param number_of_layers:
+    :param lstm_size:
+    :return:
+    """
+    features_placeholder = tf.placeholder(tf.float32, [None, length_of_each_sequence, 2], name='features_placeholder')
+    seed = tf.placeholder(tf.int64, shape=[])
+
+    def lstm_cell():
+        return tf.nn.rnn_cell.LSTMCell(lstm_size)
+
+    stacked_lstm = [lstm_cell() for _ in range(number_of_layers)]
+    # create a RNN cell composed sequentially of a number of RNNCells
+    multi_rnn_cell = tf.nn.rnn_cell.MultiRNNCell(stacked_lstm)
+    # 'outputs' is a tensor of shape [batch_size, max_time, 256]
+    # 'state' is a N-tuple where N is the number of LSTMCells containing a
+    # tf.contrib.rnn.LSTMStateTuple for each cell
+    outputs, state = tf.nn.dynamic_rnn(cell=multi_rnn_cell,
+                                       inputs=features_placeholder[:, :-future_prediction],
+                                       dtype=tf.float32)
+    # final_state = state[-1]
+    dense = tf.layers.dense(outputs[:, -1], dense_hidden_units, activation=tf.nn.relu, name='dense',
+                            kernel_initializer=tf.truncated_normal_initializer(mean=0.001, stddev=0.1),
+                            bias_initializer=tf.truncated_normal_initializer(mean=0.01, stddev=0.1))
+
+    dense_time_of_change = tf.layers.dense(dense, dense_hidden_units, activation=tf.nn.relu, name='dense_time_of_change',
+                            kernel_initializer=tf.truncated_normal_initializer(mean=0.001, stddev=0.1),
+                            bias_initializer=tf.truncated_normal_initializer(mean=0.01, stddev=0.1))
+    y_time_of_change = tf.layers.dense(dense_time_of_change, 1, activation=None, name='y_time_of_change',
+                         kernel_initializer=tf.truncated_normal_initializer(mean=0.001, stddev=0.1),
+                         bias_initializer=tf.truncated_normal_initializer(mean=0.01, stddev=0.1))
+
+    dense_price = tf.layers.dense(dense, dense_hidden_units, activation=tf.nn.relu,
+                                           name='dense_price',
+                                           kernel_initializer=tf.truncated_normal_initializer(mean=0.001, stddev=0.1),
+                                           bias_initializer=tf.truncated_normal_initializer(mean=0.01, stddev=0.1))
+    y_price = tf.layers.dense(dense_price, 1, activation=None, name='y_dense_price',
+                                       kernel_initializer=tf.truncated_normal_initializer(mean=0.001, stddev=0.1),
+                                       bias_initializer=tf.truncated_normal_initializer(mean=0.01, stddev=0.1))
+
+
+    learning_rate = 1e-4
+    optimizer = tf.train.AdamOptimizer(learning_rate)
+    predicted_labels = tf.concat([y_price, y_time_of_change], 1)
     # TODO: Are we sure with this?
     true_labels = features_placeholder[:, -1]
     assert predicted_labels.shape[1] == true_labels.shape[1], str(predicted_labels.shape[1]) + ' ' + str(
