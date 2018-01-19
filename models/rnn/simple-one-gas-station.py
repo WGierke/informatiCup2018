@@ -1,5 +1,6 @@
 import os
 import pandas as pd
+import numpy as np
 import tensorflow as tf
 from sklearn import model_selection
 from time import time
@@ -8,11 +9,18 @@ import argparse
 GAS_STATIONS_PATH = os.path.join('..','..', 'data', 'raw', 'input_data', 'Eingabedaten', 'Tankstellen.csv')
 GAS_PRICE_PATH = os.path.join('..','..', 'data', 'raw', 'input_data', 'Eingabedaten', 'Benzinpreise')
 
+SIMPLE_RNN_MODEL = 'resampled'
+EVENT_RNN_MODEL = 'event'
+
 gas_stations_df = pd.read_csv(GAS_STATIONS_PATH, sep=';', names=['id', 'Name', 'Company', 'Street', 'House_Number', 'Postalcode', 'City', 'Lat', 'Long'],index_col='id')
 
 def parse_arguments():
     global args
     parser = argparse.ArgumentParser()
+    parser.add_argument("-m", "--model",
+                        type=str,
+                        default=SIMPLE_RNN_MODEL,
+                        help="Name of model, can be one of {}".format(str([SIMPLE_RNN_MODEL,EVENT_RNN_MODEL])))
     parser.add_argument("-g", "--gas_station",
                         type=int,
                         help="Number of gas station to learn on")
@@ -59,7 +67,11 @@ def parse_arguments():
                         nargs='+',
                         type=int,
                         help="Additional gas stations which are feed into the model",
-                        default=None)
+                        default=[])
+    parser.add_argument("--sequence_stride",
+                        type=int,
+                        help="At every sequence stride a new sequence is extracted for the training and test data.",
+                        default=0)
     return parser.parse_args()
 
 
@@ -105,7 +117,8 @@ def train(X_test, X_val, chkpt_path, features_placeholder, gpu_options, init, it
             train_writer.add_summary(summary, training_cycles)
 
 
-def define_model_simple(dense_hidden_units, future_prediction, length_of_each_sequence, number_of_layers, lstm_size, number_of_additional_gas_stations=0):
+def define_simple_rnn_model(dense_hidden_units, future_prediction, length_of_each_sequence, number_of_layers, lstm_size, number_of_additional_gas_stations=0):
+
     features_placeholder = tf.placeholder(tf.float32, [None, length_of_each_sequence, 1 + number_of_additional_gas_stations], name='features_placeholder')
     seed = tf.placeholder(tf.int64, shape=[])
 
@@ -131,7 +144,6 @@ def define_model_simple(dense_hidden_units, future_prediction, length_of_each_se
     learning_rate = 1e-4
     optimizer = tf.train.AdamOptimizer(learning_rate)
     predicted_labels = y_
-    # TODO: Are we sure with this?
     true_labels = features_placeholder[:, -1]
     assert predicted_labels.shape[1] == true_labels.shape[1], str(predicted_labels.shape[1]) + ' ' + str(
         true_labels.shape[1])
@@ -143,7 +155,7 @@ def define_model_simple(dense_hidden_units, future_prediction, length_of_each_se
     tf.summary.scalar(tensor=mse, name='MSE')
     return features_placeholder, seed, train_step
 
-def define_model_change_time(dense_hidden_units, future_prediction, length_of_each_sequence, number_of_layers, lstm_size,):
+def define_event_rnn_model(dense_hidden_units, length_of_each_sequence, number_of_layers, lstm_size):
     """
     Placeholder expects first the price and the time to the next change as input.
 
@@ -154,6 +166,7 @@ def define_model_change_time(dense_hidden_units, future_prediction, length_of_ea
     :param lstm_size:
     :return:
     """
+    # [price, time_to_last_event]
     features_placeholder = tf.placeholder(tf.float32, [None, length_of_each_sequence, 2], name='features_placeholder')
     seed = tf.placeholder(tf.int64, shape=[])
 
@@ -167,7 +180,7 @@ def define_model_change_time(dense_hidden_units, future_prediction, length_of_ea
     # 'state' is a N-tuple where N is the number of LSTMCells containing a
     # tf.contrib.rnn.LSTMStateTuple for each cell
     outputs, state = tf.nn.dynamic_rnn(cell=multi_rnn_cell,
-                                       inputs=features_placeholder[:, :-future_prediction],
+                                       inputs=features_placeholder[:, :-1],
                                        dtype=tf.float32)
     # final_state = state[-1]
     dense = tf.layers.dense(outputs[:, -1], dense_hidden_units, activation=tf.nn.relu, name='dense',
@@ -193,7 +206,6 @@ def define_model_change_time(dense_hidden_units, future_prediction, length_of_ea
     learning_rate = 1e-4
     optimizer = tf.train.AdamOptimizer(learning_rate)
     predicted_labels = tf.concat([y_price, y_time_of_change], 1)
-    # TODO: Are we sure with this?
     true_labels = features_placeholder[:, -1]
     assert predicted_labels.shape[1] == true_labels.shape[1], str(predicted_labels.shape[1]) + ' ' + str(
         true_labels.shape[1])
@@ -209,6 +221,7 @@ def define_model_change_time(dense_hidden_units, future_prediction, length_of_ea
 def calculate_samples(gas_station_resampled, length_of_each_sequence):
     features = []
     sequence = []
+
     for value in gas_station_resampled.values:
         if len(sequence) < length_of_each_sequence - 1:
             sequence.append([value[0]])
@@ -221,6 +234,21 @@ def calculate_samples(gas_station_resampled, length_of_each_sequence):
             raise NotImplementedError()
     return features
 
+def combine_channels_and_generate_sequences(gas_station_series, sequence_length,sequence_stride=1):
+    # input: list of gas stations [[t1,t2,t3,...],[b1,b2,v3...]]
+    assert sequence_length >= 1, "Must use a positive sequence length, used {}.".format(sequence_length)
+    assert sequence_stride < 1, "Must use a positive stride, used {}.".format(sequence_stride)
+
+    features = []
+    gas_stations = np.array(gas_station_series)
+    available_timesteps = gas_stations.T.shape[0]
+    assert sequence_length <= available_timesteps, "Sequence length must be longer than the available time steps in the sequence."
+    assert sequence_stride < available_timesteps, "Stride must be smaller than the length of the time series"
+
+    for i in range(available_timesteps - sequence_length):
+        features.append(gas_stations.T[i:i + sequence_length])
+    return np.array(features)
+
 
 def build_dataset(X_train, batch_size, seed):
     dataset = tf.data.Dataset.from_tensor_slices(X_train)
@@ -230,43 +258,74 @@ def build_dataset(X_train, batch_size, seed):
     next_elem = iterator.get_next()
     return iterator, next_elem
 
+def load_station(gas_station_id):
+    p = os.path.join(GAS_PRICE_PATH,'{}.csv'.format(gas_station_id))
+    try:
+        return pd.read_csv(p, names=['Timestamp', 'Price'],  index_col='Timestamp',parse_dates=['Timestamp'],sep=';')
+    except FileNotFoundError:
+        raise ValueError('You tried to retrieve the history for gas station with id {}, but file {} was no found.'.format(gas_station_id,p))
 
 def main():
     args = parse_arguments()
-
+    model = args.model
     gas_station_id = args.gas_station
+    gas_station_df = load_station(gas_station_id)
 
-    gas_station = pd.read_csv(os.path.join(GAS_PRICE_PATH,'{}.csv'.format(gas_station_id)), names=['Timestamp', 'Price'],  index_col='Timestamp',parse_dates=['Timestamp'],sep=';')
-    if args.resampling is not None:
-        gas_station_resampled = gas_station.resample(args.resampling).bfill()
-    else:
-        gas_station_resampled = gas_station
-
+    # overall model params
     lstm_size = args.lstm_size
     number_of_layers = args.layers
     batch_size = args.batch_size
-    length_of_each_sequence = args.length_of_sequence
     dense_hidden_units = args.dense_hidden_units
-    future_prediction = args.future_prediction
+    length_of_each_sequence = args.length_of_sequence
+    frequency = args.resampling
+    sequence_stride = args.sequence_stride
 
-    if args.additional_gas_stations is not None:
-        raise NotImplementedError("Have to implement additional gas stations")
+    if model == EVENT_RNN_MODEL:
 
-    features = calculate_samples(gas_station_resampled, length_of_each_sequence)
-    print("Number of training samples: " + str(len(features)))
+        if args.additional_gas_stations is not None:
+            raise NotImplementedError("Close gas stations not available for this model.")
+
+        if args.future_prediction is not None:
+            raise NotImplementedError("This model will only predict one next event.")
+
+        deltas = pd.Series(gas_station_df.index[1:] - gas_station_df.index[:-1])
+        deltas_in_minutes = deltas.apply(lambda x: x.round(frequency).total_seconds() / pd.Timedelta('1D').total_seconds())
+        event_deltas = np.append([0], deltas_in_minutes.values)
+        price = gas_station_df.values
+        features = combine_channels_and_generate_sequences([price, event_deltas],sequence_length=length_of_each_sequence,sequence_stride=sequence_stride)
+        print("Number of training samples: {}".format(features.shape[0]))
+        features_placeholder, seed, train_step = define_event_rnn_model(dense_hidden_units, length_of_each_sequence, number_of_layers, lstm_size)
+
+    elif model == SIMPLE_RNN_MODEL:
+
+        future_prediction = args.future_prediction
+        additional_gas_station_ids = args.additional_gas_stations
+
+        gas_station_resampled = gas_station_df.resample(frequency).bfill()
+
+        additional_gas_stations_resampled = []
+        for id in additional_gas_station_ids:
+            additional_df = load_station(id).resample(frequency).bfill()
+            additional_df_aligned = gas_station_resampled.align(additional_df)[1].fillna(0)[gas_station_resampled.index]
+            additional_gas_stations_resampled.append(additional_df_aligned)
+
+        print("Using {} as supplementary gas stations".format(', '.join(additional_gas_station_ids)))
+
+        #fetures is now numpy array - does it bother?
+        features = combine_channels_and_generate_sequences([gas_station_resampled] + additional_gas_stations_resampled, length_of_each_sequence,sequence_stride=sequence_stride)
+        print("Number of training samples: {}".format(features.shape[0]))
+
+        features_placeholder, seed, train_step = define_simple_rnn_model(dense_hidden_units, future_prediction,
+                                                                         length_of_each_sequence, number_of_layers,
+                                                                         lstm_size,
+                                                                         len(additional_gas_station_ids))
+    else:
+        raise NotImplementedError("The model you wished for is not available, go implement it yourself.")
 
     X_train, X_intermediate, _, _ = model_selection.train_test_split(features, features, test_size=0.4, shuffle=False,
-                                                             random_state=42)
+                                                                    random_state=42)
     # Train is here validation set
     X_val, X_test, _, _ = model_selection.train_test_split(X_intermediate, X_intermediate, test_size=0.75, shuffle=False, random_state=42)
-
-    if args.additional_gas_stations is None:
-        features_placeholder, seed, train_step = define_model_simple(dense_hidden_units, future_prediction,
-                                                                     length_of_each_sequence, number_of_layers, lstm_size)
-    else:
-        features_placeholder, seed, train_step = define_model_simple(dense_hidden_units, future_prediction,
-                                                                     length_of_each_sequence, number_of_layers, lstm_size,
-                                                                     len(args.additional_gas_stations))
 
     iterator, next_elem = build_dataset(X_train, batch_size, seed)
 
