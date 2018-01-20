@@ -1,4 +1,4 @@
-informatiCup2018
+informatiCup2018 [![CircleCI](https://circleci.com/gh/WGierke/informatiCup2018.svg?style=svg&circle-token=00f4e65f31b3192e58b793d0282ba0af8c009b44)](https://circleci.com/gh/WGierke/informatiCup2018)
 ==============================
 
 Predicting the optimal strategy for fueling for a given route ([task description](https://github.com/WGierke/informatiCup2018/blob/master/references/Intellitank.pdf)).
