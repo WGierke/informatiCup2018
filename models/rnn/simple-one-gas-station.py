@@ -82,7 +82,9 @@ def parse_arguments():
 
 
 def train(X_test, X_val, chkpt_path, features_placeholder, gpu_options, init, iterator, log_path, merged, next_elem,
-          saver, seed, train_step):
+          saver, seed, train_step, name_of_training):
+    log_path = log_path + "/" + name_of_training
+    chkpt_path = chkpt_path + "/" + name_of_training + "/"
     with tf.Session(config=tf.ConfigProto(gpu_options=gpu_options)) as sess:
         if tf.train.latest_checkpoint(chkpt_path) is not None:
             saver.restore(sess, tf.train.latest_checkpoint(chkpt_path))
@@ -117,7 +119,7 @@ def train(X_test, X_val, chkpt_path, features_placeholder, gpu_options, init, it
             if training_cycles % 5000 == 0:
                 if not os.path.exists(chkpt_path):
                     os.makedirs(chkpt_path)
-                save_path = saver.save(sess, chkpt_path + str(training_cycles) + '.ckpt')
+                save_path = saver.save(sess, chkpt_path + name_of_training + "-" + str(training_cycles) + '.ckpt')
 
             training_cycles += 1
             train_writer.add_summary(summary, training_cycles)
@@ -343,13 +345,13 @@ def main():
     # Add ops to save and restore all the variables.
     saver = tf.train.Saver(keep_checkpoint_every_n_hours=0.10)
     name_of_training = args.name
-    log_path = args.log_path + "/" + name_of_training
-    chkpt_path = args.chkpt_path + "/" + name_of_training + "/"
+    log_path = args.log_path
+    chkpt_path = args.chkpt_path
 
     gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=args.memory)
 
     train(X_test, X_val, chkpt_path, features_placeholder, gpu_options, init, iterator, log_path, merged, next_elem,
-          saver, seed, train_step)
+          saver, seed, train_step, name_of_training)
 
 if __name__ == "__main__":
     main()
