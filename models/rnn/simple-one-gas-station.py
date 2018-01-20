@@ -217,6 +217,7 @@ def define_event_rnn_model(dense_hidden_units, length_of_each_sequence, number_o
     true_labels = features_placeholder[:, -1]
     assert predicted_labels.shape[1] == true_labels.shape[1], str(predicted_labels.shape[1]) + ' ' + str(
         true_labels.shape[1])
+    # We could introduce linear coefficients for the cost function
     cost = tf.reduce_sum(tf.squared_difference(predicted_labels, true_labels), name='cost')
     tf.summary.scalar(name='cost', tensor=cost)
     grads_and_vars = optimizer.compute_gradients(loss=cost)  # list of (gradient, variable) tuples
@@ -272,6 +273,25 @@ def load_station(gas_station_id):
         return pd.read_csv(p, names=['Timestamp', 'Price'],  index_col='Timestamp',parse_dates=['Timestamp'],sep=';')
     except FileNotFoundError:
         raise ValueError('You tried to retrieve the history for gas station with id {}, but file {} was no found.'.format(gas_station_id,p))
+
+
+def build_df_for_all_gas_stations():
+    raise NotImplementedError()
+
+    min_start_date = gas_stations_df.min
+    max_end_date = gas_stations_df.max
+    for gas_station_row in gas_stations_df.iterrows():
+        try:
+            gas_station = pd.read_csv(os.path.join(GAS_PRICE_PATH, '{}.csv'.format(gas_station_row)),
+                                      names=['Timestamp', 'Price'], index_col='Timestamp', parse_dates=['Timestamp'],
+                                      sep=';')
+            if min_start_date > gas_station.index.min:
+                min_start_date = gas_station.index.min
+            if max_end_date < gas_station.index.max:
+                max_end_date = gas_station.index.max
+        except FileNotFoundError:
+            pass
+    gas_stations = []
 
 def main():
     args = parse_arguments()
