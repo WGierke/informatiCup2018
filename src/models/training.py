@@ -68,7 +68,7 @@ def train(gas_station_id=DEFAULT_GAS_STATION_ID, up_to_days=DEFAULT_UP_TO_DAYS, 
     m = Prophet(holidays=holidays_df)
     df_fb = df_gas_station.copy()
     df_fb['y'] = df_fb['Price']
-    df_fb['ds'] = df_fb['Timestamp'].apply(lambda x: get_datetime_from_string(str(x), keep_utc=False))
+    df_fb['ds'] = df_fb['Timestamp'].apply(lambda x: get_datetime_from_string(str(x)))
     df_fb.drop(['Timestamp', 'Price'], inplace=True, axis=1)
     if up_to_days > 0:
         start_future = df_fb.iloc[-1, :]['ds'] - datetime.timedelta(days=up_to_days)
