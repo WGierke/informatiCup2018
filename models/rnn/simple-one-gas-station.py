@@ -115,9 +115,9 @@ def train(X_test, X_val, chkpt_path, features_placeholder, gpu_options, init, it
                 val_writer.add_summary(summary_val, training_cycles)
             summary, _ = sess.run([merged, train_step], feed_dict={features_placeholder: elem})
             if training_cycles % 5000 == 0:
-                if not os.path.exists(chkpt_path + '/'):
-                    os.makedirs(chkpt_path + '/')
-                save_path = saver.save(sess, chkpt_path + '-' + str(training_cycles) + '.ckpt')
+                if not os.path.exists(chkpt_path):
+                    os.makedirs(chkpt_path)
+                save_path = saver.save(sess, chkpt_path + str(training_cycles) + '.ckpt')
 
             training_cycles += 1
             train_writer.add_summary(summary, training_cycles)
@@ -344,7 +344,7 @@ def main():
     saver = tf.train.Saver(keep_checkpoint_every_n_hours=0.10)
     name_of_training = args.name
     log_path = args.log_path + "/" + name_of_training
-    chkpt_path = args.chkpt_path + "/" + name_of_training
+    chkpt_path = args.chkpt_path + "/" + name_of_training + "/"
 
     gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=args.memory)
 
