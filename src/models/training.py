@@ -1,6 +1,7 @@
 import datetime
 import os
 import sys
+import pickle
 
 import pandas as pd
 from fbprophet import Prophet
@@ -10,11 +11,10 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 root = os.path.join(dir_path, '..', '..')
 sys.path.insert(0, root)
 sys.path.append('..')
-from config import PROCESSED_PATH, MODELS_PATH, GAS_PRICE_PATH, GAS_STATIONS_PATH
+from config import PROCESSED_PATH, MODEL_PATH, GAS_PRICE_PATH, GAS_STATIONS_PATH
 from src.features.preprocessing import get_datetime_from_string
 
-BEST_MODEL_PATH = os.path.join(MODELS_PATH, "model_station_{}.pkl")
-DEFAULT_GAS_STATION_ID = 1905
+DEFAULT_GAS_STATION_ID = 1920
 DEFAULT_UP_TO_DAYS = 31
 
 
@@ -45,11 +45,12 @@ def get_vacations_df_from_state(state):
     return pd.read_csv(os.path.join(PROCESSED_PATH, "vacations_{}.csv".format(state)))
 
 
-def train(gas_station_id=DEFAULT_GAS_STATION_ID, up_to_days=DEFAULT_UP_TO_DAYS):
+def train(gas_station_id=DEFAULT_GAS_STATION_ID, up_to_days=DEFAULT_UP_TO_DAYS, cache=True):
     """
     Train Prophet on the prices of the given gas station up to a specified amount of days
     :param gas_station_id: Internal identifier of the gas station
     :param up_to_days: Last days that should be excluded from training
+    :param cache: Whether to persist the model
     :return: fitted model, DataFrame the model was not fitted to according to up_to_days
     """
     gas_station_path = os.path.join(GAS_PRICE_PATH, "{}.csv".format(gas_station_id))
@@ -67,8 +68,14 @@ def train(gas_station_id=DEFAULT_GAS_STATION_ID, up_to_days=DEFAULT_UP_TO_DAYS):
     df_fb['y'] = df_fb['Price']
     df_fb['ds'] = df_fb['Timestamp'].apply(lambda x: get_datetime_from_string(str(x), keep_utc=False))
     df_fb.drop(['Timestamp', 'Price'], inplace=True, axis=1)
-    start_future = df_fb.iloc[-1, :]['ds'] - datetime.timedelta(days=up_to_days)
-    df_past = df_fb[df_fb['ds'] < start_future]
-    df_future = df_fb[df_fb['ds'] >= start_future]
+    if up_to_days > 0:
+        start_future = df_fb.iloc[-1, :]['ds'] - datetime.timedelta(days=up_to_days)
+        df_past = df_fb[df_fb['ds'] < start_future]
+        df_future = df_fb[df_fb['ds'] >= start_future]
+    else:
+        df_past = df_fb
+        df_future = pd.DataFrame(columns=['y'])
     m.fit(df_past)
+    if cache:
+        pickle.dump(m, open(MODEL_PATH.format(gas_station_id), "wb"), protocol=pickle.HIGHEST_PROTOCOL)
     return m, df_future
