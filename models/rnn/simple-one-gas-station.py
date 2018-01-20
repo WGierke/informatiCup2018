@@ -6,13 +6,16 @@ from sklearn import model_selection
 from time import time
 import argparse
 
-GAS_STATIONS_PATH = os.path.join('..','..', 'data', 'raw', 'input_data', 'Eingabedaten', 'Tankstellen.csv')
-GAS_PRICE_PATH = os.path.join('..','..', 'data', 'raw', 'input_data', 'Eingabedaten', 'Benzinpreise')
+GAS_STATIONS_PATH = os.path.join('..', '..', 'data', 'raw', 'input_data', 'Eingabedaten', 'Tankstellen.csv')
+GAS_PRICE_PATH = os.path.join('..', '..', 'data', 'raw', 'input_data', 'Eingabedaten', 'Benzinpreise')
 
 SIMPLE_RNN_MODEL = 'resampled'
 EVENT_RNN_MODEL = 'event'
 
-gas_stations_df = pd.read_csv(GAS_STATIONS_PATH, sep=';', names=['id', 'Name', 'Company', 'Street', 'House_Number', 'Postalcode', 'City', 'Lat', 'Long'],index_col='id')
+gas_stations_df = pd.read_csv(GAS_STATIONS_PATH, sep=';',
+                              names=['id', 'Name', 'Company', 'Street', 'House_Number', 'Postalcode', 'City', 'Lat',
+                                     'Long'], index_col='id')
+
 
 def parse_arguments():
     global args
@@ -20,7 +23,7 @@ def parse_arguments():
     parser.add_argument("--model",
                         type=str,
                         default=SIMPLE_RNN_MODEL,
-                        help="Name of model, can be one of {}".format(str([SIMPLE_RNN_MODEL,EVENT_RNN_MODEL])))
+                        help="Name of model, can be one of {}".format(str([SIMPLE_RNN_MODEL, EVENT_RNN_MODEL])))
     parser.add_argument("-g", "--gas_station",
                         type=int,
                         required=True,
@@ -125,9 +128,11 @@ def train(X_test, X_val, chkpt_path, features_placeholder, gpu_options, init, it
             train_writer.add_summary(summary, training_cycles)
 
 
-def define_simple_rnn_model(dense_hidden_units, future_prediction, length_of_each_sequence, number_of_layers, lstm_size, number_of_additional_gas_stations=0):
-
-    features_placeholder = tf.placeholder(tf.float32, [None, length_of_each_sequence, 1 + number_of_additional_gas_stations], name='features_placeholder')
+def define_simple_rnn_model(dense_hidden_units, future_prediction, length_of_each_sequence, number_of_layers, lstm_size,
+                            number_of_additional_gas_stations=0):
+    features_placeholder = tf.placeholder(tf.float32,
+                                          [None, length_of_each_sequence, 1 + number_of_additional_gas_stations],
+                                          name='features_placeholder')
     seed = tf.placeholder(tf.int64, shape=[])
 
     def lstm_cell():
@@ -146,7 +151,7 @@ def define_simple_rnn_model(dense_hidden_units, future_prediction, length_of_eac
     dense = tf.layers.dense(outputs[:, -1], dense_hidden_units, activation=tf.nn.relu, name='dense',
                             kernel_initializer=tf.truncated_normal_initializer(mean=0.001, stddev=0.1),
                             bias_initializer=tf.truncated_normal_initializer(mean=0.01, stddev=0.1))
-    y_ = tf.layers.dense(dense,  1 + number_of_additional_gas_stations, activation=None, name='y_',
+    y_ = tf.layers.dense(dense, 1 + number_of_additional_gas_stations, activation=None, name='y_',
                          kernel_initializer=tf.truncated_normal_initializer(mean=0.001, stddev=0.1),
                          bias_initializer=tf.truncated_normal_initializer(mean=0.01, stddev=0.1))
     learning_rate = 1e-4
@@ -162,6 +167,7 @@ def define_simple_rnn_model(dense_hidden_units, future_prediction, length_of_eac
     mse = tf.sqrt(tf.reduce_mean(tf.square(tf.subtract(true_labels, predicted_labels))))
     tf.summary.scalar(tensor=mse, name='MSE')
     return features_placeholder, seed, train_step
+
 
 def define_event_rnn_model(dense_hidden_units, length_of_each_sequence, number_of_layers, lstm_size):
     """
@@ -195,21 +201,21 @@ def define_event_rnn_model(dense_hidden_units, length_of_each_sequence, number_o
                             kernel_initializer=tf.truncated_normal_initializer(mean=0.001, stddev=0.1),
                             bias_initializer=tf.truncated_normal_initializer(mean=0.01, stddev=0.1))
 
-    dense_time_of_change = tf.layers.dense(dense, dense_hidden_units, activation=tf.nn.relu, name='dense_time_of_change',
-                            kernel_initializer=tf.truncated_normal_initializer(mean=0.001, stddev=0.1),
-                            bias_initializer=tf.truncated_normal_initializer(mean=0.01, stddev=0.1))
-    y_time_of_change = tf.layers.dense(dense_time_of_change, 1, activation=None, name='y_time_of_change',
-                         kernel_initializer=tf.truncated_normal_initializer(mean=0.001, stddev=0.1),
-                         bias_initializer=tf.truncated_normal_initializer(mean=0.01, stddev=0.1))
-
-    dense_price = tf.layers.dense(dense, dense_hidden_units, activation=tf.nn.relu,
-                                           name='dense_price',
+    dense_time_of_change = tf.layers.dense(dense, dense_hidden_units, activation=tf.nn.relu,
+                                           name='dense_time_of_change',
                                            kernel_initializer=tf.truncated_normal_initializer(mean=0.001, stddev=0.1),
                                            bias_initializer=tf.truncated_normal_initializer(mean=0.01, stddev=0.1))
-    y_price = tf.layers.dense(dense_price, 1, activation=None, name='y_dense_price',
+    y_time_of_change = tf.layers.dense(dense_time_of_change, 1, activation=None, name='y_time_of_change',
                                        kernel_initializer=tf.truncated_normal_initializer(mean=0.001, stddev=0.1),
                                        bias_initializer=tf.truncated_normal_initializer(mean=0.01, stddev=0.1))
 
+    dense_price = tf.layers.dense(dense, dense_hidden_units, activation=tf.nn.relu,
+                                  name='dense_price',
+                                  kernel_initializer=tf.truncated_normal_initializer(mean=0.001, stddev=0.1),
+                                  bias_initializer=tf.truncated_normal_initializer(mean=0.01, stddev=0.1))
+    y_price = tf.layers.dense(dense_price, 1, activation=None, name='y_dense_price',
+                              kernel_initializer=tf.truncated_normal_initializer(mean=0.001, stddev=0.1),
+                              bias_initializer=tf.truncated_normal_initializer(mean=0.01, stddev=0.1))
 
     learning_rate = 1e-4
     optimizer = tf.train.AdamOptimizer(learning_rate)
@@ -243,7 +249,8 @@ def calculate_samples(gas_station_resampled, length_of_each_sequence):
             raise NotImplementedError()
     return features
 
-def combine_channels_and_generate_sequences(gas_station_series, sequence_length,sequence_stride=1):
+
+def combine_channels_and_generate_sequences(gas_station_series, sequence_length, sequence_stride=1):
     # input: list of gas stations [[t1,t2,t3,...],[b1,b2,v3...]]
     assert sequence_length >= 1, "Must use a positive sequence length, used {}.".format(sequence_length)
     assert sequence_stride > 0, "Must use a positive stride, used {}.".format(sequence_stride)
@@ -261,18 +268,21 @@ def combine_channels_and_generate_sequences(gas_station_series, sequence_length,
 
 def build_dataset(X_train, batch_size, seed):
     dataset = tf.data.Dataset.from_tensor_slices(X_train)
-    dataset = dataset.shuffle(seed=seed, buffer_size=len(X_train)+1)
+    dataset = dataset.shuffle(seed=seed, buffer_size=len(X_train) + 1)
     dataset = dataset.batch(batch_size)
     iterator = dataset.make_initializable_iterator()
     next_elem = iterator.get_next()
     return iterator, next_elem
 
+
 def load_station(gas_station_id):
-    p = os.path.join(GAS_PRICE_PATH,'{}.csv'.format(gas_station_id))
+    p = os.path.join(GAS_PRICE_PATH, '{}.csv'.format(gas_station_id))
     try:
-        return pd.read_csv(p, names=['Timestamp', 'Price'],  index_col='Timestamp',parse_dates=['Timestamp'],sep=';')
+        return pd.read_csv(p, names=['Timestamp', 'Price'], index_col='Timestamp', parse_dates=['Timestamp'], sep=';')
     except FileNotFoundError:
-        raise ValueError('You tried to retrieve the history for gas station with id {}, but file {} was no found.'.format(gas_station_id,p))
+        raise ValueError(
+            'You tried to retrieve the history for gas station with id {}, but file {} was no found.'.format(
+                gas_station_id, p))
 
 
 def build_df_for_all_gas_stations():
@@ -292,6 +302,7 @@ def build_df_for_all_gas_stations():
         except FileNotFoundError:
             pass
     gas_stations = []
+
 
 def main():
     args = parse_arguments()
@@ -317,12 +328,16 @@ def main():
             raise NotImplementedError("This model will only predict one next event.")
 
         deltas = pd.Series(gas_station_df.index[1:] - gas_station_df.index[:-1])
-        deltas_in_minutes = deltas.apply(lambda x: x.round(frequency).total_seconds() / pd.Timedelta('1D').total_seconds())
+        deltas_in_minutes = deltas.apply(
+            lambda x: x.round(frequency).total_seconds() / pd.Timedelta('1D').total_seconds())
         event_deltas = np.append([0], deltas_in_minutes.values.flatten())
         price = gas_station_df.values.flatten()
-        features = combine_channels_and_generate_sequences([price, event_deltas],sequence_length=length_of_each_sequence,sequence_stride=sequence_stride)
+        features = combine_channels_and_generate_sequences([price, event_deltas],
+                                                           sequence_length=length_of_each_sequence,
+                                                           sequence_stride=sequence_stride)
         print("Number of training samples: {}".format(features.shape[0]))
-        features_placeholder, seed, train_step = define_event_rnn_model(dense_hidden_units, length_of_each_sequence, number_of_layers, lstm_size)
+        features_placeholder, seed, train_step = define_event_rnn_model(dense_hidden_units, length_of_each_sequence,
+                                                                        number_of_layers, lstm_size)
 
     elif model == SIMPLE_RNN_MODEL:
 
@@ -334,12 +349,15 @@ def main():
         additional_gas_stations_resampled = []
         for id in additional_gas_station_ids:
             additional_df = load_station(id).resample(frequency).bfill()
-            additional_df_aligned = gas_station_resampled.align(additional_df)[1].fillna(0)[gas_station_resampled.index.min():gas_station_resampled.index.max()]
+            additional_df_aligned = gas_station_resampled.align(additional_df)[1].fillna(0)[
+                                    gas_station_resampled.index.min():gas_station_resampled.index.max()]
             additional_gas_stations_resampled.append(additional_df_aligned.values.flatten())
 
-        print("Using {} as supplementary gas stations".format(', '.join(map(str,additional_gas_station_ids))))
+        print("Using {} as supplementary gas stations".format(', '.join(map(str, additional_gas_station_ids))))
 
-        features = combine_channels_and_generate_sequences([gas_station_resampled.values.flatten()] + additional_gas_stations_resampled, length_of_each_sequence,sequence_stride=sequence_stride)
+        features = combine_channels_and_generate_sequences(
+            [gas_station_resampled.values.flatten()] + additional_gas_stations_resampled, length_of_each_sequence,
+            sequence_stride=sequence_stride)
         print("Number of training samples: {}".format(features.shape[0]))
 
         features_placeholder, seed, train_step = define_simple_rnn_model(dense_hidden_units,
@@ -347,14 +365,16 @@ def main():
                                                                          length_of_each_sequence=length_of_each_sequence,
                                                                          number_of_layers=number_of_layers,
                                                                          lstm_size=lstm_size,
-                                                                         number_of_additional_gas_stations=len(additional_gas_station_ids))
+                                                                         number_of_additional_gas_stations=len(
+                                                                             additional_gas_station_ids))
     else:
         raise NotImplementedError("The model you wished for is not available, go implement it yourself.")
 
     X_train, X_intermediate, _, _ = model_selection.train_test_split(features, features, test_size=0.4, shuffle=False,
-                                                                    random_state=42)
+                                                                     random_state=42)
     # Train is here validation set
-    X_val, X_test, _, _ = model_selection.train_test_split(X_intermediate, X_intermediate, test_size=0.75, shuffle=False, random_state=42)
+    X_val, X_test, _, _ = model_selection.train_test_split(X_intermediate, X_intermediate, test_size=0.75,
+                                                           shuffle=False, random_state=42)
 
     iterator, next_elem = build_dataset(X_train, batch_size, seed)
 
@@ -372,6 +392,7 @@ def main():
 
     train(X_test, X_val, chkpt_path, features_placeholder, gpu_options, init, iterator, log_path, merged, next_elem,
           saver, seed, train_step, name_of_training)
+
 
 if __name__ == "__main__":
     main()
