@@ -251,7 +251,7 @@ def combine_channels_and_generate_sequences(gas_station_series, sequence_length,
     assert sequence_length <= available_timesteps, "Sequence length must be longer than the available time steps in the sequence."
     assert sequence_stride < available_timesteps, "Stride must be smaller than the length of the time series"
 
-    for i in range(available_timesteps - sequence_length):
+    for i in range(available_timesteps - sequence_length)[::sequence_stride]:
         features.append(gas_stations.T[i:i + sequence_length])
     return np.array(features)
 
