@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import sys
+import traceback
 
 sys.path.insert(0, os.getcwd())
 from flask import Flask, request, send_from_directory
@@ -65,6 +66,7 @@ def get_prediction_for_route():
     except Exception as e:
         logging.error(e)
         print(val)
+        traceback.print_exc()
         return create_response(algorithm_error, error=True, status=500)
 
     return create_response(result)
@@ -82,7 +84,7 @@ def get_prediction():
         return create_response("Also expected this key(s): {}".format(missing_keys), error=True, status=400)
 
     path = [(p[0], p[1]) for p in val['path']]
-    length = float(val['length'])
+    length = float(val['length'])  # TODO: read starttime
     start_time = dt.datetime.now()
     speed = float(val['speed'])
     fuel = float(val['fuel'])
@@ -93,6 +95,7 @@ def get_prediction():
                                                                   start_fuel_l=fuel)
     except Exception as e:
         logging.error(e)
+        traceback.print_exc()
         print(val)
         return create_response(algorithm_error, error=True, status=500)
 

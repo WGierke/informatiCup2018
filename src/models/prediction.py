@@ -23,8 +23,9 @@ def predict(model, up_to_days=DEFAULT_UP_TO_DAYS, start_time=None, end_time=None
         df_future = df_future[df_future['ds'] >= start_future]
     elif start_time is not None and end_time is not None:
         indices = pd.date_range(start_time, end_time, freq='H')
-        assert indices, "Indices should not be empty"
-        df_future = pd.DataFrame(index=indices, columns=['y'])
+        assert len(indices) > 0, "Indices should not be empty"
+        df_future = pd.DataFrame(columns=['ds', 'y'])
+        df_future['ds'] = indices
     else:
         raise ValueError("Either up_to_days or start_time and end_time must be set appropriately.")
     df_forecast = model.predict(df_future)

@@ -39,9 +39,9 @@ def _get_gas_station_points_near_path(path, radius=0.02):
 
 
 def predict_price(id, time):
-    model, _, df_forecast = train_and_predict(gas_station_id=id, start_time=time, end_time=time)
-    deci_cent = df_forecast.iloc[0, 1]
-    print("Predicted for id {} at time {} price".format(id, time, deci_cent))
+    model, _, df_forecast = train_and_predict(gas_station_id=id, start_time=time, end_time=time, use_cached=True)
+    deci_cent = df_forecast.loc[0, 'yhat']
+    print("Predicted for id {} at time {} price {}".format(id, time, deci_cent))
     return deci_cent * 0.001
 
 
