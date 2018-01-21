@@ -44,10 +44,18 @@ Project Organization
 --------
 ### Setup
 
-Install all dependencies  
+- Clone the repository including submodules (to include the challenge data as well):  
+`git clone --recursive git@github.com:WGierke/informatiCup2018.git`  
+However, if you already downloaded the [InformatiCup2018 repository](https://github.com/InformatiCup/InformatiCup2018), you can also create a symbolic link that shows from `data/raw/input_data` to the informatiCup2018 repository. A sanity check would be that `data/raw/input_data/Eingabedaten/Fahrzeugrouten/Bertha\ Benz\ Memorial\ Route.csv` is accessible.
+
+- Install all dependencies  
 `pip3 install -r requirements.txt`  
-Start the server  
-`python3 src/serving/server.py`
+
+### Usage
+- To start the server:  
+`python3 src/serving/server.py`  
+- To predict an optimal route given the path to an input file:  
+`python3 src/serving/route_prediction.py --input PATH_TO_ROUTE.CSV`
 
 ### Credits
 [Materialize](http://materializecss.com/)  
