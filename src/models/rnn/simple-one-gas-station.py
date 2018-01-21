@@ -5,12 +5,16 @@ import tensorflow as tf
 from sklearn import model_selection
 from time import time
 import argparse
+import pickle
 
 GAS_STATIONS_PATH = os.path.join('..', '..', 'data', 'raw', 'input_data', 'Eingabedaten', 'Tankstellen.csv')
 GAS_PRICE_PATH = os.path.join('..', '..', 'data', 'raw', 'input_data', 'Eingabedaten', 'Benzinpreise')
 
 SIMPLE_RNN_MODEL = 'resampled'
 EVENT_RNN_MODEL = 'event'
+
+TRAIN = 'train'
+PREDICT = 'predict'
 
 gas_stations_df = pd.read_csv(GAS_STATIONS_PATH, sep=';',
                               names=['id', 'Name', 'Company', 'Street', 'House_Number', 'Postalcode', 'City', 'Lat',
@@ -81,7 +85,29 @@ def parse_arguments():
                         type=int,
                         help="At every sequence stride a new sequence is extracted for the training and test data.",
                         default=1)
+    parser.add_argument("--mode",
+                        type=str,
+                        default=TRAIN,
+                        help="Can be one of {}".format(str([TRAIN, PREDICT])))
+    parser.add_argument("--predict_n_steps",
+                        type=int,
+                        help="Number of steps (either frequency or number of events) that should be predicted.",
+                        default=30)
+    parser.add_argument("--predict_start_point",
+                        type=int,
+                        help="Number of steps (either frequency or number of events) from the end of the given series "
+                             "from where the predition should start (e.g. 30 to predict last month of available data.",
+                        default=30)
+    parser.add_argument("--prediction_save_path",
+                    type=str,
+                    required=True,
+                    help="Path for saving the prediction should include '.pkl' extension")
     return parser.parse_args()
+
+
+def predict(X, sess, features_placeholder, predict):
+        y = sess.run(predict, feed_dict={features_placeholder: X})
+        return y
 
 
 def train(X_test, X_val, chkpt_path, features_placeholder, gpu_options, init, iterator, log_path, merged, next_elem,
@@ -166,7 +192,7 @@ def define_simple_rnn_model(dense_hidden_units, future_prediction, length_of_eac
     train_step = optimizer.apply_gradients(grads_and_vars)
     mse = tf.sqrt(tf.reduce_mean(tf.square(tf.subtract(true_labels, predicted_labels))))
     tf.summary.scalar(tensor=mse, name='MSE')
-    return features_placeholder, seed, train_step
+    return features_placeholder, seed, train_step, y_
 
 
 def define_event_rnn_model(dense_hidden_units, length_of_each_sequence, number_of_layers, lstm_size):
@@ -230,7 +256,7 @@ def define_event_rnn_model(dense_hidden_units, length_of_each_sequence, number_o
     train_step = optimizer.apply_gradients(grads_and_vars)
     mse = tf.sqrt(tf.reduce_mean(tf.square(tf.subtract(true_labels, predicted_labels))))
     tf.summary.scalar(tensor=mse, name='MSE')
-    return features_placeholder, seed, train_step
+    return features_placeholder, seed, train_step, y_price, y_time_of_change
 
 
 def calculate_samples(gas_station_resampled, length_of_each_sequence):
@@ -319,6 +345,9 @@ def main():
     frequency = args.resampling
     sequence_stride = args.sequence_stride
 
+    # TODO: raining arg
+    start_from_day = 12
+
     if model == EVENT_RNN_MODEL:
 
         if len(args.additional_gas_stations) > 0:
@@ -336,8 +365,11 @@ def main():
                                                            sequence_length=length_of_each_sequence,
                                                            sequence_stride=sequence_stride)
         print("Number of training samples: {}".format(features.shape[0]))
-        features_placeholder, seed, train_step = define_event_rnn_model(dense_hidden_units, length_of_each_sequence,
-                                                                        number_of_layers, lstm_size)
+
+        features_placeholder, seed, train_step, y_price, y_event = define_event_rnn_model(dense_hidden_units,
+                                                                                          length_of_each_sequence,
+                                                                                          number_of_layers, lstm_size)
+        prediction = [y_price, y_event]
 
     elif model == SIMPLE_RNN_MODEL:
 
@@ -360,13 +392,14 @@ def main():
             sequence_stride=sequence_stride)
         print("Number of training samples: {}".format(features.shape[0]))
 
-        features_placeholder, seed, train_step = define_simple_rnn_model(dense_hidden_units,
-                                                                         future_prediction=future_prediction,
-                                                                         length_of_each_sequence=length_of_each_sequence,
-                                                                         number_of_layers=number_of_layers,
-                                                                         lstm_size=lstm_size,
-                                                                         number_of_additional_gas_stations=len(
-                                                                             additional_gas_station_ids))
+        features_placeholder, seed, train_step, y = define_simple_rnn_model(dense_hidden_units,
+                                                                            future_prediction=future_prediction,
+                                                                            length_of_each_sequence=length_of_each_sequence,
+                                                                            number_of_layers=number_of_layers,
+                                                                            lstm_size=lstm_size,
+                                                                            number_of_additional_gas_stations=len(
+                                                                                additional_gas_station_ids))
+        prediction = y
     else:
         raise NotImplementedError("The model you wished for is not available, go implement it yourself.")
 
@@ -382,16 +415,61 @@ def main():
 
     merged = tf.summary.merge_all()
 
-    # Add ops to save and restore all the variables.
-    saver = tf.train.Saver(keep_checkpoint_every_n_hours=0.10)
-    name_of_training = args.name
-    log_path = args.log_path
     chkpt_path = args.chkpt_path
-
+    saver = tf.train.Saver(keep_checkpoint_every_n_hours=0.10)
     gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=args.memory)
 
-    train(X_test, X_val, chkpt_path, features_placeholder, gpu_options, init, iterator, log_path, merged, next_elem,
-          saver, seed, train_step, name_of_training)
+    mode = args.mode
+
+    if TRAIN == mode:
+        # Add ops to save and restore all the variables.
+
+        name_of_training = args.name
+        log_path = args.log_path
+
+        train(X_test, X_val, chkpt_path, features_placeholder, gpu_options, init, iterator, log_path, merged, next_elem,
+              saver, seed, train_step, name_of_training)
+
+    if PREDICT == mode:  # prediction
+
+        prediction_save_path = args.prediction_save_path
+        print(prediction_save_path)
+        required_prediction_steps = args.predict_n_steps
+        starting_from_frequencys = args.predict_start_point
+
+
+        base = [features[-start_from_day]]
+        final_result_prediction = []
+
+        # predict time frame of p days from last n sequence_length days
+        if model == EVENT_RNN_MODEL:
+            # predict until n is reached
+            # predict every sample until n is reached
+            raise NotImplementedError("oops")
+
+        if model == SIMPLE_RNN_MODEL:
+            # predict every sample until n is reached
+            frequency_timedelta = pd.to_timedelta(frequency)
+            prediction_start = gas_station_df.index.max() - frequency_timedelta * starting_from_frequencys
+            prediction_end = prediction_start + frequency_timedelta * (required_prediction_steps - 1)
+            idx = pd.date_range(prediction_start, prediction_end,
+                                freq=frequency)
+            idx = pd.DatetimeIndex(idx)
+            prediction_df = pd.DataFrame(index=idx)
+            with tf.Session(config=tf.ConfigProto(gpu_options=gpu_options)) as sess:
+                saver.restore(sess, chkpt_path)
+                print("Restored model from " + chkpt_path)
+                for i in range(required_prediction_steps):
+                    p_i = predict(X=base, features_placeholder=features_placeholder,predict=prediction,sess=sess)
+                    final_result_prediction.append(p_i[0])
+                    base = [np.vstack((base[0][1:], p_i))]
+            #print(final_result_prediction.shape())
+            final_result_prediction = np.array(final_result_prediction)
+            prediction_df['Price_{}'.format(gas_station_id)] = final_result_prediction[:,1]
+            for i, id in enumerate(range(len(additional_gas_station_ids))):
+                prediction_df['Price_{}'.format(id)] = final_result_prediction[:,i+1]
+            pickle.dump(prediction_df, open(prediction_save_path, 'wb'))
+            print("Saved prediction at {}".format(prediction_save_path))
 
 
 if __name__ == "__main__":
