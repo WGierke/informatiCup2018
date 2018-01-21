@@ -36,7 +36,7 @@ def predict(model, up_to_days=DEFAULT_UP_TO_DAYS, start_time=None, end_time=None
 
 
 def train_and_predict(gas_station_id=DEFAULT_GAS_STATION_ID, start_time=None, end_time=None,
-                      up_to_days=DEFAULT_UP_TO_DAYS, plot=False, use_cached=False):
+                      up_to_days=DEFAULT_UP_TO_DAYS, plot=False, use_cached=False, cache=False):
     """
     Train the model for gas_station_id and return the prediction for the next up_to_days days
     :param gas_station_id: Internal identifier of the gas station
@@ -45,6 +45,7 @@ def train_and_predict(gas_station_id=DEFAULT_GAS_STATION_ID, start_time=None, en
     :param end_time: Timestamp of the end of the forecast
     :param plot: Whether to plot the forecast
     :param use_cached: Whether to load the serialized model if it exists
+    :param cache: Whether to persist the model that was fitted on the possibly partial dataset
     :return: Fitted Model,
              DataFrame containing the true future prices
              DataFrame containing the predicted prices
@@ -63,6 +64,6 @@ def train_and_predict(gas_station_id=DEFAULT_GAS_STATION_ID, start_time=None, en
             print(e)
 
     if not model_loaded:
-        model, df_future = train(gas_station_id=gas_station_id, up_to_days=up_to_days)
+        model, df_future = train(gas_station_id=gas_station_id, up_to_days=up_to_days, cache=cache)
     df_forecast = predict(model, start_time=start_time, end_time=end_time, up_to_days=up_to_days, plot=plot)
     return model, df_future, df_forecast
