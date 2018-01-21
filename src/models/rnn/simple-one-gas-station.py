@@ -435,7 +435,7 @@ def main():
         prediction_save_path = args.prediction_save_path
         print(prediction_save_path)
         required_prediction_steps = args.predict_n_steps
-        starting_from_frequencys = args.predict_start_point
+        starting_from_frequencys = args.predict_start_point * -1
 
 
         base = [features[-start_from_day]]
@@ -465,7 +465,7 @@ def main():
                     base = [np.vstack((base[0][1:], p_i))]
             #print(final_result_prediction.shape())
             final_result_prediction = np.array(final_result_prediction)
-            prediction_df['Price_{}'.format(gas_station_id)] = final_result_prediction[:,1]
+            prediction_df['Price_{}'.format(gas_station_id)] = final_result_prediction[:,0]
             for i, id in enumerate(range(len(additional_gas_station_ids))):
                 prediction_df['Price_{}'.format(id)] = final_result_prediction[:,i+1]
             pickle.dump(prediction_df, open(prediction_save_path, 'wb'))
