@@ -3,6 +3,9 @@ informatiCup2018 [![CircleCI](https://circleci.com/gh/WGierke/informatiCup2018.s
 
 Predicting the optimal strategy for fueling for a given route ([task description](https://github.com/WGierke/informatiCup2018/blob/master/references/Intellitank.pdf)).
 
+[Report](https://github.com/WGierke/informatiCup2018/blob/master/reports/informaticup2018.pdf)  
+[Routes](https://github.com/WGierke/informatiCup2018/tree/master/routes)
+
 Project Organization
 ------------
 
