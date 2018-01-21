@@ -45,7 +45,7 @@ Project Organization
 ### Setup
 
 Install all dependencies  
-`pip install -r requirements.txt`  
+`pip3 install -r requirements.txt`  
 Start the server  
 `python3 src/serving/server.py`
 
