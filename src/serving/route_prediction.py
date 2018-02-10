@@ -1,5 +1,6 @@
 import os
 import sys
+from multiprocessing import Pool, cpu_count
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 root = os.path.join(dir_path, '..', '..')
@@ -14,6 +15,7 @@ from shapely.geometry import LineString, MultiPoint
 from config import RAW_PATH
 from src.fixed_path_gas_station import fixed_path_gas_station as fpgs
 from src.models.prediction import train_and_predict
+from tqdm import tqdm
 
 ### Prepare data, using buffer approach from 3.0-fb-organize_gas_stations.ipynb
 GAS_STATIONS_PATH = os.path.join('data', 'raw', 'input_data', 'Eingabedaten', 'Tankstellen.csv')
@@ -52,7 +54,8 @@ def _get_gas_station_points_near_path(path, radius=0.02):
 
 
 def predict_price(id, time):
-    model, _, df_forecast = train_and_predict(gas_station_id=id, start_time=time, end_time=time, use_cached=True)
+    model, _, df_forecast = train_and_predict(gas_station_id=id, start_time=time, end_time=time, use_cached=True,
+                                              cache=True)
     deci_cent = df_forecast.loc[0, 'yhat']
     print("Predicted for id {} at time {} price {}".format(id, time, deci_cent))
     return deci_cent * 0.001
@@ -104,16 +107,30 @@ def get_fill_instructions_for_google_path(orig_path, path_length_km, start_time,
             'overall_price': result.price}
 
 
+def predict(index_row):
+    index, row = index_row
+    price = predict_price(row['Gas_Station_Id'], get_datetime_from_string(str(row['Timestamp'])))
+    coordinates = fpgs.Coordinate(gas_stations.loc[row['Gas_Station_Id']]['Lat'],
+                                  gas_stations.loc[row['Gas_Station_Id']]['Long'])
+    return index, price, coordinates
+
+
 def get_fill_instructions_for_route(f, start_fuel=0):
     capacity = float(f.readline())
     route = pd.read_csv(f, names=['Timestamp_str', 'Gas_Station_Id'], sep=';')
     route['Timestamp'] = route['Timestamp_str'].apply(lambda x: pd.Timestamp(x))
-    cost = []
-    coordinates = []
-    for index, row in route.iterrows():
-        cost.append(predict_price(row['Gas_Station_Id'], get_datetime_from_string(str(row['Timestamp']))))
-        coordinates.append(fpgs.Coordinate(gas_stations.loc[row['Gas_Station_Id']]['Lat']
-                                           , gas_stations.loc[row['Gas_Station_Id']]['Long']))
+    coordinates = [-1] * len(route)
+    cost = [-1] * len(route)
+
+    job_args = [(index, row) for index, row in route.iterrows()]
+    with Pool(processes=cpu_count()) as p:
+        with tqdm(total=len(route)) as pbar:
+            for _, result in tqdm(enumerate(p.imap_unordered(predict, job_args))):
+                pbar.update()
+                res_index, res_price, res_coordinates = result
+                cost[res_index] = res_price
+                coordinates[res_index] = res_coordinates
+
     route['cost'] = cost
     route['coords'] = coordinates
     result = fpgs.FixedPathGasStation(route, capacity, start_fuel)
