@@ -1,6 +1,7 @@
 import os
 import sys
 from multiprocessing import Pool, cpu_count
+from decimal import Decimal
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 root = os.path.join(dir_path, '..', '..')
@@ -56,9 +57,9 @@ def _get_gas_station_points_near_path(path, radius=0.02):
 def predict_price(id, time):
     model, _, df_forecast = train_and_predict(gas_station_id=id, start_time=time, end_time=time, use_cached=True,
                                               cache=True)
-    deci_cent = df_forecast.loc[0, 'yhat']
+    deci_cent = round(Decimal(df_forecast.loc[0, 'yhat']), 0)
     print("Predicted for id {} at time {} price {}".format(id, time, deci_cent))
-    return deci_cent * 0.001
+    return deci_cent
 
 
 def get_fill_instructions_for_google_path(orig_path, path_length_km, start_time, speed_kmh, capacity_l, start_fuel_l):
@@ -137,7 +138,6 @@ def get_fill_instructions_for_route(f, start_fuel=0):
     # todo join on gas station id for adress
     route['fill_liters'] = result.fill_liters
     route = route.drop(['Timestamp', 'coords'], axis=1)
-    route['cost'] *= 1000
     route.to_csv(OUTPUT_FILE, sep=';', header=False, index=False)
 
 
