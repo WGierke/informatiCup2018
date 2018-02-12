@@ -188,7 +188,7 @@ class FixedPathGasStation:
         self.fill_liters = fill_liters
 
     def compute_price(self):
-        self.price = sum([cost * liters for cost, liters in zip(self.path['cost'], self.fill_liters)])
+        self.price = sum([float(cost) * liters for cost, liters in zip(self.path['cost'], self.fill_liters)])
 
     def __str__(self):
         display_format = "{}: {}"
