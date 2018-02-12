@@ -45,13 +45,14 @@ def get_vacations_df_from_state(state):
     return pd.read_csv(os.path.join(PROCESSED_PATH, "vacations_{}.csv".format(state)))
 
 
-def train(gas_station_id=DEFAULT_GAS_STATION_ID, up_to_days=DEFAULT_UP_TO_DAYS, cache=True):
+def train(gas_station_id=DEFAULT_GAS_STATION_ID, up_to_days=None, up_to_timestamp=None, cache=True):
     """
     Train Prophet on the prices of the given gas station up to a specified amount of days
     :param gas_station_id: Internal identifier of the gas station
     :param up_to_days: Last days that should be excluded from training
+    :param up_to_timestamp: Data will be excluded that is older than this timestamp
     :param cache: Whether to persist the model
-    :return: fitted model, DataFrame the model was not fitted to according to up_to_days
+    :return: fitted model, DataFrame the model was not fitted to according to up_to_days and up_to_timestamp
     """
     gas_station_path = os.path.join(GAS_PRICE_PATH, "{}.csv".format(gas_station_id))
     # If we're on the CI server, overwrite the path to the specific gas station with a fixed to save bandwidth
@@ -70,10 +71,13 @@ def train(gas_station_id=DEFAULT_GAS_STATION_ID, up_to_days=DEFAULT_UP_TO_DAYS, 
     df_fb['y'] = df_fb['Price']
     df_fb['ds'] = df_fb['Timestamp'].apply(lambda x: get_datetime_from_string(str(x)))
     df_fb.drop(['Timestamp', 'Price'], inplace=True, axis=1)
-    if up_to_days > 0:
+    if up_to_days is not None and up_to_days > 0:
         start_future = df_fb.iloc[-1, :]['ds'] - datetime.timedelta(days=up_to_days)
         df_past = df_fb[df_fb['ds'] < start_future]
         df_future = df_fb[df_fb['ds'] >= start_future]
+    elif up_to_timestamp is not None:
+        df_past = df_fb[df_fb['ds'] < up_to_timestamp]
+        df_future = df_fb[df_fb['ds'] >= up_to_timestamp]
     else:
         df_past = df_fb
         df_future = pd.DataFrame(columns=['y'])

@@ -3,6 +3,9 @@ informatiCup2018 [![CircleCI](https://circleci.com/gh/WGierke/informatiCup2018.s
 
 Predicting the optimal strategy for fueling for a given route ([task description](https://github.com/WGierke/informatiCup2018/blob/master/references/Intellitank.pdf)).
 
+[Report](https://github.com/WGierke/informatiCup2018/blob/master/reports/informaticup2018.pdf)  
+[Routes](https://github.com/WGierke/informatiCup2018/tree/master/routes)
+
 Project Organization
 ------------
 
@@ -54,6 +57,8 @@ However, if you already downloaded the [InformatiCup2018 repository](https://git
 ### Usage
 - To start the server:  
 `python3 src/serving/server.py`  
+- To predict the gas prices given using training data up to a specified point in time for a given point in time:  
+`python3 src/serving/price_prediction.py --input PATH_TO_PREDICTION_POINTS.CSV`
 - To predict an optimal route given the path to an input file:  
 `python3 src/serving/route_prediction.py --input PATH_TO_ROUTE.CSV`
 

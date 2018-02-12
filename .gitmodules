@@ -1,3 +1,3 @@
 [submodule "data/raw/input_data"]
 	path = data/raw/input_data
-	url = git@github.com:WGierke/InformatiCup2018-1.git
+	url = https://github.com/WGierke/InformatiCup2018-1.git
