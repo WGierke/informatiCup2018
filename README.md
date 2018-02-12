@@ -57,6 +57,8 @@ However, if you already downloaded the [InformatiCup2018 repository](https://git
 ### Usage
 - To start the server:  
 `python3 src/serving/server.py`  
+- To predict the gas prices given using training data up to a specified point in time for a given point in time:  
+`python3 src/serving/price_prediction.py --input PATH_TO_PREDICTION_POINTS.CSV`
 - To predict an optimal route given the path to an input file:  
 `python3 src/serving/route_prediction.py --input PATH_TO_ROUTE.CSV`
 
