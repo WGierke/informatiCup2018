@@ -54,11 +54,20 @@ def _get_gas_station_points_near_path(path, radius=0.02):
     return list(path.buffer(radius).intersection(gas_station_points))
 
 
-def predict_price(id, time):
-    model, _, df_forecast = train_and_predict(gas_station_id=id, start_time=time, end_time=time, use_cached=True,
+def predict_price(gas_station_id, time, in_euros=False):
+    """
+    Given a gas station id and a timestamp, predict the gas price of the station in the future.
+    :param gas_station_id: gas station id
+    :param time: timestamp
+    :param in_euros: whether to return the price in euros
+    :return: price
+    """
+    model, _, df_forecast = train_and_predict(gas_station_id=gas_station_id, start_time=time, end_time=time, use_cached=True,
                                               cache=True)
     deci_cent = round(Decimal(df_forecast.loc[0, 'yhat']), 0)
-    print("Predicted for id {} at time {} price {}".format(id, time, deci_cent))
+    print("Predicted for id {} at time {} price {}".format(gas_station_id, time, deci_cent))
+    if in_euros:
+        return 0.001 * deci_cent
     return deci_cent
 
 
@@ -84,7 +93,7 @@ def get_fill_instructions_for_google_path(orig_path, path_length_km, start_time,
         lambda dist: start_time + dt.timedelta(hours=dist / speed_kmh))
 
     # predict the price
-    positions_df['price'] = positions_df.apply(lambda row: predict_price(row.id, row.stop_time),
+    positions_df['price'] = positions_df.apply(lambda row: predict_price(row.id, row.stop_time, in_euros=True),
                                                axis=1)
 
     # calculate the best filling strategy
@@ -110,7 +119,7 @@ def get_fill_instructions_for_google_path(orig_path, path_length_km, start_time,
 
 def predict(index_row):
     index, row = index_row
-    price = predict_price(row['Gas_Station_Id'], get_datetime_from_string(str(row['Timestamp'])))
+    price = predict_price(row['Gas_Station_Id'], get_datetime_from_string(str(row['Timestamp'])), in_euros=True)
     coordinates = fpgs.Coordinate(gas_stations.loc[row['Gas_Station_Id']]['Lat'],
                                   gas_stations.loc[row['Gas_Station_Id']]['Long'])
     return index, price, coordinates
