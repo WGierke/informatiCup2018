@@ -8,7 +8,7 @@ from config import MODEL_PATH
 from .training import DEFAULT_UP_TO_DAYS, DEFAULT_GAS_STATION_ID, train
 
 
-def predict(model, predict_days=DEFAULT_UP_TO_DAYS, start_time=None, end_time=None, plot=False):
+def predict(model, predict_days=DEFAULT_UP_TO_DAYS, start_time=None, end_time=None, plot=False, timezone='utc'):
     """
     Predict the next up_to_days days using the given model
     :param model: Trained Prophet model
@@ -16,6 +16,7 @@ def predict(model, predict_days=DEFAULT_UP_TO_DAYS, start_time=None, end_time=No
     :param start_time: Timestamp of the beginning of the forecast
     :param end_time: Timestamp of the end of the forecast
     :param plot: Whether to plot the forecast
+    :param timezone: Timezone of the data with which the model was trained
     :return: DataFrame containing the predicted prices
     """
     if start_time is None and end_time is None:
@@ -23,7 +24,7 @@ def predict(model, predict_days=DEFAULT_UP_TO_DAYS, start_time=None, end_time=No
         start_future = df_future.iloc[-1, :]['ds'] - datetime.timedelta(days=predict_days)
         df_future = df_future[df_future['ds'] >= start_future]
     elif start_time is not None and end_time is not None:
-        indices = pd.date_range(start_time, end_time, freq='H').tz_convert(None)
+        indices = pd.date_range(start_time, end_time, freq='H', tz=timezone).tz_convert(None)
         assert len(indices) > 0, "Indices should not be empty"
         df_future = pd.DataFrame(columns=['ds', 'y'])
         df_future['ds'] = indices
