@@ -2,6 +2,7 @@ import os
 import sys
 from multiprocessing import Pool, cpu_count
 from decimal import Decimal
+from functools import partial
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 root = os.path.join(dir_path, '..', '..')
@@ -117,15 +118,15 @@ def get_fill_instructions_for_google_path(orig_path, path_length_km, start_time,
             'overall_price': result.price}
 
 
-def predict(index_row):
+def predict(index_row, in_euros=False):
     index, row = index_row
-    price = predict_price(row['Gas_Station_Id'], get_datetime_from_string(str(row['Timestamp'])), in_euros=True)
+    price = predict_price(row['Gas_Station_Id'], get_datetime_from_string(str(row['Timestamp'])), in_euros=in_euros)
     coordinates = fpgs.Coordinate(gas_stations.loc[row['Gas_Station_Id']]['Lat'],
                                   gas_stations.loc[row['Gas_Station_Id']]['Long'])
     return index, price, coordinates
 
 
-def get_fill_instructions_for_route(f, start_fuel=0):
+def get_fill_instructions_for_route(f, start_fuel=0, in_euros=False):
     capacity = float(f.readline())
     route = pd.read_csv(f, names=['Timestamp_str', 'Gas_Station_Id'], sep=';')
     route['Timestamp'] = route['Timestamp_str'].apply(lambda x: pd.Timestamp(x))
@@ -135,7 +136,7 @@ def get_fill_instructions_for_route(f, start_fuel=0):
     job_args = [(index, row) for index, row in route.iterrows()]
     with Pool(processes=cpu_count()) as p:
         with tqdm(total=len(route)) as pbar:
-            for _, result in tqdm(enumerate(p.imap_unordered(predict, job_args))):
+            for _, result in tqdm(enumerate(p.imap_unordered(partial(predict, in_euros=in_euros), job_args))):
                 pbar.update()
                 res_index, res_price, res_coordinates = result
                 cost[res_index] = res_price
@@ -169,6 +170,6 @@ if __name__ == '__main__':
         sys.exit(-1)
 
     with open(args.input) as f:
-        get_fill_instructions_for_route(f)
+        get_fill_instructions_for_route(f, in_euros=False)
 
     print("Successfully wrote output to {}".format(OUTPUT_FILE))

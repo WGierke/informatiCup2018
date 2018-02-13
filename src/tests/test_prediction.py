@@ -15,8 +15,9 @@ class TestPrediction(TestCase):
         model_path = MODEL_PATH.format(GAS_STATION_ID)
         if os.path.isfile(model_path):
             os.remove(model_path)
-        model_new, df_future_new, df_forecast_new = train_and_predict(gas_station_id=GAS_STATION_ID, use_cached=True)
+        model_new, df_future_new, df_forecast_new = train_and_predict(gas_station_id=GAS_STATION_ID, use_cached=True,
+                                                                      predict_days=31)
         model_cached, df_future_cached, df_forecast_cached = train_and_predict(gas_station_id=GAS_STATION_ID,
-                                                                               use_cached=True)
+                                                                               use_cached=True, predict_days=31)
         assert sum(df_forecast_new['yhat'] - df_forecast_cached[
             'yhat']) == 0, "Predictions of freshly trained and serialized model are not equal"
