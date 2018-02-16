@@ -62,7 +62,7 @@ def get_prediction_for_route():
     f = request.files['route']
 
     try:
-        result = prediction.get_fill_instructions_for_route(f, start_fuel=fuel)
+        result = prediction.get_fill_instructions_for_route(f, start_fuel=fuel, in_euros=True)
     except Exception as e:
         logging.error(e)
         print(val)
