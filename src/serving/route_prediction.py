@@ -20,7 +20,10 @@ from src.models.prediction import train_and_predict
 from tqdm import tqdm
 
 ### Prepare data, using buffer approach from 3.0-fb-organize_gas_stations.ipynb
-GAS_STATIONS_PATH = os.path.join('data', 'raw', 'input_data', 'Eingabedaten', 'Tankstellen.csv')
+if os.environ.get('CI', False):
+    GAS_STATIONS_PATH = os.path.join('tests', 'data', 'Tankstellen.csv')
+else:
+    GAS_STATIONS_PATH = os.path.join('data', 'raw', 'input_data', 'Eingabedaten', 'Tankstellen.csv')
 DEFAULT_ROUTE = "DEFAULT_ROUTE"
 OUTPUT_FILE = "route_prediction.csv"
 

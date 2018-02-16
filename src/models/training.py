@@ -57,7 +57,7 @@ def train(gas_station_id=DEFAULT_GAS_STATION_ID, up_to_days=None, up_to_timestam
     gas_station_path = os.path.join(GAS_PRICE_PATH, "{}.csv".format(gas_station_id))
     # If we're on the CI server, overwrite the path to the specific gas station with a fixed to save bandwidth
     if os.environ.get('CI', False):
-        gas_station_path = os.path.join(RAW_PATH, "1920.csv")
+        gas_station_path = os.path.join(RAW_PATH, "{}.csv".format(gas_station_id))
     gas_stations_df = pd.read_csv(GAS_STATIONS_PATH, sep=',')
     gas_station_state = gas_stations_df[gas_stations_df["id"] == gas_station_id]["State"].iloc[0]
 

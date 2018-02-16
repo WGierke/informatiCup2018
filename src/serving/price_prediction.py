@@ -15,7 +15,6 @@ sys.path.insert(0, root)
 from src.features.preprocessing import get_datetime_from_string
 from src.models.prediction import train_and_predict
 
-GAS_STATIONS_PATH = os.path.join('data', 'raw', 'input_data', 'Eingabedaten', 'Tankstellen.csv')
 OUTPUT_FILE = "price_prediction.csv"
 
 
