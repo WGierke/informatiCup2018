@@ -22,7 +22,7 @@ from tqdm import tqdm
 ### Prepare data, using buffer approach from 3.0-fb-organize_gas_stations.ipynb
 GAS_STATIONS_PATH = os.path.join('data', 'raw', 'input_data', 'Eingabedaten', 'Tankstellen.csv')
 DEFAULT_ROUTE = "DEFAULT_ROUTE"
-OUTPUT_FILE = "output.csv"
+OUTPUT_FILE = "route_prediction.csv"
 
 gas_stations = pd.read_csv(GAS_STATIONS_PATH, sep=';',
                            names=['id', 'Name', 'Company', 'Street', 'House_Number', 'Postalcode', 'City', 'Lat',
@@ -120,7 +120,7 @@ def get_fill_instructions_for_google_path(orig_path, path_length_km, start_time,
 
 def predict(index_row, in_euros=False):
     index, row = index_row
-    price = predict_price(row['Gas_Station_Id'], get_datetime_from_string(str(row['Timestamp'])), in_euros=in_euros)
+    price = predict_price(row['Gas_Station_Id'], get_datetime_from_string(row['Timestamp']), in_euros=in_euros)
     coordinates = fpgs.Coordinate(gas_stations.loc[row['Gas_Station_Id']]['Lat'],
                                   gas_stations.loc[row['Gas_Station_Id']]['Long'])
     return index, price, coordinates
@@ -129,7 +129,7 @@ def predict(index_row, in_euros=False):
 def get_fill_instructions_for_route(f, start_fuel=0, in_euros=False):
     capacity = float(f.readline())
     route = pd.read_csv(f, names=['Timestamp_str', 'Gas_Station_Id'], sep=';')
-    route['Timestamp'] = route['Timestamp_str'].apply(lambda x: pd.Timestamp(x))
+    route.rename({'Timestamp_str': 'Timestamp'}, axis='columns')
     coordinates = [-1] * len(route)
     cost = [-1] * len(route)
 

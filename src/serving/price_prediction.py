@@ -40,8 +40,8 @@ def predict_prices_in_future(data_rows):
 
     for index, data_row in enumerate(data_rows):
         up_to_timestamp, prediction_timestamp, gas_station_id = data_row.split(';')
-        up_to_timestamp, prediction_timestamp = get_datetime_from_string(up_to_timestamp, keep_utc=True), \
-                                                get_datetime_from_string(prediction_timestamp, keep_utc=True)
+        up_to_timestamp, prediction_timestamp = get_datetime_from_string(up_to_timestamp), get_datetime_from_string(
+            prediction_timestamp)
         gas_station_id = int(gas_station_id)
         job_args.append([index, up_to_timestamp, prediction_timestamp, gas_station_id])
 
