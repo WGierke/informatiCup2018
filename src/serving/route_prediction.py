@@ -129,7 +129,7 @@ def predict(index_row, in_euros=False):
 def get_fill_instructions_for_route(f, start_fuel=0, in_euros=False):
     capacity = float(f.readline())
     route = pd.read_csv(f, names=['Timestamp_str', 'Gas_Station_Id'], sep=';')
-    route.rename({'Timestamp_str': 'Timestamp'}, axis='columns')
+    route.rename({'Timestamp_str': 'Timestamp'}, axis='columns', inplace=True)
     coordinates = [-1] * len(route)
     cost = [-1] * len(route)
 
