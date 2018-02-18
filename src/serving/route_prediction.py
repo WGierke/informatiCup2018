@@ -1,6 +1,6 @@
 import os
 import sys
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 from functools import partial
 from multiprocessing import Pool, cpu_count
 
@@ -64,17 +64,16 @@ def predict_price(gas_station_id, time, in_euros=False):
     :param gas_station_id: gas station id
     :param time: timestamp
     :param in_euros: whether to return the price in euros
-    :return: price
+    :return: price (float if in_euros, else int)
     """
     model, _, df_forecast = train_and_predict(gas_station_id=gas_station_id, start_time=time, end_time=time,
                                               use_cached=True,
                                               cache=True)
-    deci_cent = round(Decimal(df_forecast.loc[0, 'yhat']), 0)
-    deci_cent = float(deci_cent)
+    deci_cent = float(Decimal(df_forecast.loc[0, 'yhat']).quantize(0, ROUND_HALF_UP))
     print("Predicted for id {} at time {} price {}".format(gas_station_id, time, deci_cent))
     if in_euros:
         return 0.001 * deci_cent
-    return deci_cent
+    return int(deci_cent)
 
 
 def multiprocessed_predict_price(index_station_time, in_euros=False):
@@ -85,17 +84,17 @@ def multiprocessed_predict_price(index_station_time, in_euros=False):
     - gas_station_id: gas station id
     - time: timestamp
     :param in_euros: whether to return the price in euros
-    :return: index, price
+    :return: index, price (float if in_euros, else int)
     """
     index, gas_station_id, time = index_station_time
     model, _, df_forecast = train_and_predict(gas_station_id=gas_station_id, start_time=time, end_time=time,
                                               use_cached=True,
                                               cache=True)
-    deci_cent = float(round(Decimal(df_forecast.loc[0, 'yhat']), 0))
+    deci_cent = float(Decimal(df_forecast.loc[0, 'yhat']).quantize(0, ROUND_HALF_UP))
     print("Predicted for id {} at time {} price {}".format(gas_station_id, time, deci_cent))
     if in_euros:
         return index, 0.001 * deci_cent
-    return index, deci_cent
+    return index, int(deci_cent)
 
 
 def get_fill_instructions_for_google_path(orig_path, path_length_km, start_time, speed_kmh, capacity_l, start_fuel_l):
