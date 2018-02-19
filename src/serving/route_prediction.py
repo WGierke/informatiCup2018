@@ -93,7 +93,7 @@ def multiprocessed_predict_price(index_station_time, in_euros=False):
     if df_forecast is None:
         # data of gas station was not available
         # return an extremely high value for a gas price that will not be included in our prediction
-        return index, sys.maxsize
+        return index, 1000
     deci_cent = float(Decimal(df_forecast.loc[0, 'yhat']).quantize(0, ROUND_HALF_UP))
     print("Predicted for id {} at time {} price {}".format(gas_station_id, time, deci_cent))
     if in_euros:
