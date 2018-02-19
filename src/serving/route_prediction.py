@@ -60,7 +60,7 @@ def predict_price(id, time):
     if df_forecast is None:
         # data of gas station was not available
         # return an extremely high value for a gas price that will not be included in our prediction
-        return 1000
+        return sys.maxsize
     deci_cent = float(round(Decimal(df_forecast.loc[0, 'yhat']), 0))
     print("Predicted for id {} at time {} price {}".format(id, time, deci_cent))
     return deci_cent
