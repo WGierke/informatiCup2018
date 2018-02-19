@@ -1,8 +1,8 @@
 import os
 import sys
-from multiprocessing import Pool, cpu_count
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 from functools import partial
+from multiprocessing import Pool, cpu_count
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 root = os.path.join(dir_path, '..', '..')
@@ -20,9 +20,12 @@ from src.models.prediction import train_and_predict
 from tqdm import tqdm
 
 ### Prepare data, using buffer approach from 3.0-fb-organize_gas_stations.ipynb
-GAS_STATIONS_PATH = os.path.join('data', 'raw', 'input_data', 'Eingabedaten', 'Tankstellen.csv')
+if os.environ.get('CI', False):
+    GAS_STATIONS_PATH = os.path.join('tests', 'data', 'Tankstellen.csv')
+else:
+    GAS_STATIONS_PATH = os.path.join('data', 'raw', 'input_data', 'Eingabedaten', 'Tankstellen.csv')
 DEFAULT_ROUTE = "DEFAULT_ROUTE"
-OUTPUT_FILE = "output.csv"
+OUTPUT_FILE = "route_prediction.csv"
 
 gas_stations = pd.read_csv(GAS_STATIONS_PATH, sep=';',
                            names=['id', 'Name', 'Company', 'Street', 'House_Number', 'Postalcode', 'City', 'Lat',
@@ -61,15 +64,37 @@ def predict_price(gas_station_id, time, in_euros=False):
     :param gas_station_id: gas station id
     :param time: timestamp
     :param in_euros: whether to return the price in euros
-    :return: price
+    :return: price (float if in_euros, else int)
     """
-    model, _, df_forecast = train_and_predict(gas_station_id=gas_station_id, start_time=time, end_time=time, use_cached=True,
+    model, _, df_forecast = train_and_predict(gas_station_id=gas_station_id, start_time=time, end_time=time,
+                                              use_cached=True,
                                               cache=True)
-    deci_cent = round(Decimal(df_forecast.loc[0, 'yhat']), 0)
+    deci_cent = float(Decimal(df_forecast.loc[0, 'yhat']).quantize(0, ROUND_HALF_UP))
     print("Predicted for id {} at time {} price {}".format(gas_station_id, time, deci_cent))
     if in_euros:
         return 0.001 * deci_cent
-    return deci_cent
+    return int(deci_cent)
+
+
+def multiprocessed_predict_price(index_station_time, in_euros=False):
+    """
+    Given an index, a gas station id and a timestamp, predict the gas price of the station in the future.
+    :param index_station_time: tuple containing
+    - index: index of the row in the original DataFrame
+    - gas_station_id: gas station id
+    - time: timestamp
+    :param in_euros: whether to return the price in euros
+    :return: index, price (float if in_euros, else int)
+    """
+    index, gas_station_id, time = index_station_time
+    model, _, df_forecast = train_and_predict(gas_station_id=gas_station_id, start_time=time, end_time=time,
+                                              use_cached=True,
+                                              cache=True)
+    deci_cent = float(Decimal(df_forecast.loc[0, 'yhat']).quantize(0, ROUND_HALF_UP))
+    print("Predicted for id {} at time {} price {}".format(gas_station_id, time, deci_cent))
+    if in_euros:
+        return index, 0.001 * deci_cent
+    return index, int(deci_cent)
 
 
 def get_fill_instructions_for_google_path(orig_path, path_length_km, start_time, speed_kmh, capacity_l, start_fuel_l):
@@ -93,9 +118,17 @@ def get_fill_instructions_for_google_path(orig_path, path_length_km, start_time,
     positions_df['stop_time'] = positions_df.distance_from_start.apply(
         lambda dist: start_time + dt.timedelta(hours=dist / speed_kmh))
 
-    # predict the price
-    positions_df['price'] = positions_df.apply(lambda row: predict_price(row.id, row.stop_time, in_euros=True),
-                                               axis=1)
+    cost = [-1] * len(positions_df)
+    job_args = [(index, row.id, row.stop_time) for index, row in positions_df.iterrows()]
+    with Pool(processes=cpu_count()) as p:
+        with tqdm(total=len(positions_df)) as pbar:
+            for _, result in tqdm(
+                    enumerate(p.imap_unordered(partial(multiprocessed_predict_price, in_euros=True), job_args))):
+                pbar.update()
+                res_index, res_price = result
+                cost[res_index] = res_price
+
+    positions_df['price'] = cost
 
     # calculate the best filling strategy
     route = pd.DataFrame({
@@ -120,7 +153,7 @@ def get_fill_instructions_for_google_path(orig_path, path_length_km, start_time,
 
 def predict(index_row, in_euros=False):
     index, row = index_row
-    price = predict_price(row['Gas_Station_Id'], get_datetime_from_string(str(row['Timestamp'])), in_euros=in_euros)
+    price = predict_price(row['Gas_Station_Id'], get_datetime_from_string(row['Timestamp']), in_euros=in_euros)
     coordinates = fpgs.Coordinate(gas_stations.loc[row['Gas_Station_Id']]['Lat'],
                                   gas_stations.loc[row['Gas_Station_Id']]['Long'])
     return index, price, coordinates
@@ -129,7 +162,7 @@ def predict(index_row, in_euros=False):
 def get_fill_instructions_for_route(f, start_fuel=0, in_euros=False):
     capacity = float(f.readline())
     route = pd.read_csv(f, names=['Timestamp_str', 'Gas_Station_Id'], sep=';')
-    route['Timestamp'] = route['Timestamp_str'].apply(lambda x: pd.Timestamp(x))
+    route.rename({'Timestamp_str': 'Timestamp'}, axis='columns', inplace=True)
     coordinates = [-1] * len(route)
     cost = [-1] * len(route)
 

@@ -79,3 +79,4 @@ widgetsnbextension==3.0.8
 quandl==3.2.1
 gunicorn==19.7.1
 Flask==0.12.2
+tqdm==4.19.5
