@@ -24,7 +24,7 @@ def predict(model, predict_days=DEFAULT_UP_TO_DAYS, start_time=None, end_time=No
         start_future = df_future.iloc[-1, :]['ds'] - datetime.timedelta(days=predict_days)
         df_future = df_future[df_future['ds'] >= start_future]
     elif start_time is not None and end_time is not None:
-        indices = pd.date_range(start_time, end_time, freq='H', tz=timezone).tz_convert(None)
+        indices = pd.date_range(start_time, end_time, freq='H', tz='utc').tz_convert(None)
         assert len(indices) > 0, "Indices should not be empty"
         df_future = pd.DataFrame(columns=['ds', 'y'])
         df_future['ds'] = indices

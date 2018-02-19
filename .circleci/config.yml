@@ -37,6 +37,9 @@ jobs:
           command: |
             . venv/bin/activate
             python -m unittest discover
+            python src/serving/price_prediction.py --input tests/data/Price_Simple.csv
+            python src/serving/route_prediction.py --input tests/data/Route_Bertha_Simple.csv
+            python tests/check_predictions.py
 
       - store_artifacts:
           path: test-reports
