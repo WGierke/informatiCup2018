@@ -22,3 +22,6 @@ notebooks/.ipynb_checkpoints/
 
 # PyCharm
 .idea
+
+# trained models
+models/*.pkl
