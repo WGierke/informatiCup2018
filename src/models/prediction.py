@@ -67,8 +67,13 @@ def train_and_predict(gas_station_id=DEFAULT_GAS_STATION_ID, start_time=None, en
         except Exception as e:
             print(e)
 
-    if not model_loaded:
-        model, df_future = train(gas_station_id=gas_station_id, up_to_days=up_to_days, up_to_timestamp=up_to_timestamp,
-                                 cache=cache)
-    df_forecast = predict(model, start_time=start_time, end_time=end_time, predict_days=predict_days, plot=plot)
-    return model, df_future, df_forecast
+    try:
+        if not model_loaded:
+            model, df_future = train(gas_station_id=gas_station_id, up_to_days=up_to_days,
+                                     up_to_timestamp=up_to_timestamp,
+                                     cache=cache)
+        df_forecast = predict(model, start_time=start_time, end_time=end_time, predict_days=predict_days, plot=plot)
+        return model, df_future, df_forecast
+    except FileNotFoundError:
+        print("No data found for gas station {}".format(gas_station_id))
+        return None, None, None

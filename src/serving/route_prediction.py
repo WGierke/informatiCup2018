@@ -90,6 +90,10 @@ def multiprocessed_predict_price(index_station_time, in_euros=False):
     model, _, df_forecast = train_and_predict(gas_station_id=gas_station_id, start_time=time, end_time=time,
                                               use_cached=True,
                                               cache=True)
+    if df_forecast is None:
+        # data of gas station was not available
+        # return an extremely high value for a gas price that will not be included in our prediction
+        return index, sys.maxsize
     deci_cent = float(Decimal(df_forecast.loc[0, 'yhat']).quantize(0, ROUND_HALF_UP))
     print("Predicted for id {} at time {} price {}".format(gas_station_id, time, deci_cent))
     if in_euros:
