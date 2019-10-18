@@ -14,7 +14,7 @@ descartes==1.1.0
 entrypoints==0.2.3
 fbprophet==0.2.1
 Fiona==1.7.10.post1
-Flask==0.12.2
+Flask==1.0
 geopandas==0.3.0
 gunicorn==19.7.1
 html5lib==1.0b10
@@ -78,5 +78,5 @@ Werkzeug==0.13
 widgetsnbextension==3.0.8
 quandl==3.2.1
 gunicorn==19.7.1
-Flask==0.12.2
+Flask==1.0
 tqdm==4.19.5
